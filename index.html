@@ -18,7 +18,7 @@
     .card:hover{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
     .btn{ border-radius: 1rem; padding:.6rem .9rem; }
 
-    /* ==== THEME TOKENS ==== */
+    /* ==== THEME TOKENS (Light default) ==== */
     :root{
       --bg: #f6f7f9;     --fg: #0b0b0c;
       --surface: #ffffff;--muted: #495160;
@@ -34,7 +34,7 @@
     .border-muted{ border-color: var(--border) !important; }
     .glass{ background: rgba(255,255,255,.72) !important; backdrop-filter: blur(8px); }
 
-    /* Dark */
+    /* Dark theme */
     body.dark{
       --bg: #0b0c10;        --fg: #f7f8fa;
       --surface: #0f1218;   --muted: #9aa3ae;
@@ -44,11 +44,19 @@
       --warn-br: rgba(234,179,8,.35);
       --warn-fg: #eab308;
     }
-    /* mapping utilità */
+
     .btn-accent{ background: var(--accent); color: white; }
     .btn-outline{ border: 1px solid var(--border); color: var(--fg); }
     .warn-box{ border: 1px solid var(--warn-br); background: var(--warn-bg); color: var(--warn-fg); }
     .accent-green-600 { accent-color: var(--accent); }
+
+    /* ZIP pills & beds segmented */
+    .zip-btn-active{ background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+    .seg-active{ background: var(--accent) !important; color:#fff !important; border-color: var(--accent) !important; }
+
+    /* remove number spinners */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
   </style>
 </head>
 <body>
@@ -71,16 +79,20 @@
           <input id="maxRent" type="number" value="3000" min="1000" step="50"
                  class="w-full border border-muted rounded-2xl p-3 bg-surface" />
         </div>
+
+        <!-- Letti min (segmentato) -->
         <div>
-          <label class="block text-sm font-medium mb-1" for="bedsMin">Letti min</label>
-          <select id="bedsMin" class="w-full border border-muted rounded-2xl p-3 bg-surface">
-            <option value="">Qualsiasi</option>
-            <option value="0">Studio</option>
-            <option value="1">1+</option>
-            <option value="2">2+</option>
-            <option value="3">3+</option>
-          </select>
+          <label class="block text-sm font-medium mb-1">Letti min</label>
+          <div id="bedsSeg" class="flex gap-2 flex-wrap">
+            <button data-beds=""  class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">Qualsiasi</button>
+            <button data-beds="0" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">Studio</button>
+            <button data-beds="1" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">1+</button>
+            <button data-beds="2" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">2+</button>
+            <button data-beds="3" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">3+</button>
+          </div>
+          <input id="bedsMin" type="hidden" value="">
         </div>
+
         <div>
           <label class="block text-sm font-medium mb-1" for="zip">ZIP (opzionale)</label>
           <input id="zip" placeholder="es. 10009" class="w-full border border-muted rounded-2xl p-3 bg-surface" />
@@ -92,6 +104,7 @@
           <button id="build" class="btn" style="background:white;color:black;border:1px solid var(--border)">Genera link</button>
           <button id="strict" class="btn btn-accent">Strict ≤$3k</button>
           <button id="save" class="btn btn-outline">Salva</button>
+          <button id="reset" class="btn btn-outline">Reset</button>
           <label class="flex items-center gap-2 text-sm font-medium ml-1">
             <input id="noFee" type="checkbox" class="w-5 h-5 accent-green-600" />
             No-fee
@@ -101,13 +114,19 @@
     </section>
 
     <!-- ZIP pills -->
-    <section class="mt-6 mb-4">
+    <section class="mt-6 mb-2">
       <h2 class="text-lg font-semibold mb-3">ZIP Manhattan rapidi</h2>
       <div id="zipPills" class="flex flex-wrap gap-2"></div>
     </section>
 
+    <!-- Quartieri rapidi -->
+    <section class="mt-4">
+      <h3 class="font-semibold mb-2">Quartieri rapidi</h3>
+      <div id="hoodPills" class="flex flex-wrap gap-2"></div>
+    </section>
+
     <!-- Avviso -->
-    <section class="mb-6">
+    <section class="mt-6 mb-6">
       <div class="warn-box rounded-xl px-4 py-3 text-sm">
         ⚠️ StreetEasy e Zillow possono mostrare annunci sponsorizzati o con “net effective rent” sopra i $3.000 anche con filtro attivo.
         Usa <strong>Strict ≤$3k</strong> per risultati garantiti.
@@ -142,7 +161,7 @@
   </div>
 
   <script>
-    // Tema persistente (chiaro di default)
+    // ===== Tema (light di default) =====
     (function initTheme(){
       const saved = localStorage.getItem('theme');
       if (!saved) { localStorage.setItem('theme','light'); }
@@ -153,21 +172,290 @@
       localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
     });
 
-    // ZIP pills
-    const MANHATTAN_ZIPS = ["10001","10002","10003","10004","10005","10006","10007","10009","10010","10011","10012","10013","10014",
-      "10016","10017","10018","10019","10021","10022","10023","10024","10025","10026","10027","10028",
-      "10029","10030","10031","10032","10033","10034","10035","10036","10037","10038","10039","10040",
-      "10044","10065","10069","10075","10280","10282"];
-    const zipPills = document.getElementById("zipPills");
-    MANHATTAN_ZIPS.forEach(z => {
-      const b = document.createElement("button");
-      b.textContent = z;
-      b.className = "px-3 py-1 rounded-full border border-gray-400 bg-gray-100 text-gray-800 text-sm font-medium hover:bg-green-500 hover:text-white hover:border-green-500 transition";
-      b.addEventListener("click", () => { document.getElementById("zip").value = z; });
-      zipPills.appendChild(b);
+    // ===== Costanti =====
+    const MANHATTAN_ZIPS = [
+      '10001','10002','10003','10004','10005','10006','10007','10009','10010','10011','10012','10013','10014',
+      '10016','10017','10018','10019','10021','10022','10023','10024','10025','10026','10027','10028',
+      '10029','10030','10031','10032','10033','10034','10035','10036','10037','10038','10039','10040',
+      '10044','10065','10069','10075','10280','10282'
+    ];
+    const HOODS = {
+      "Chelsea": "10011",
+      "West Village": "10014",
+      "East Village": "10009",
+      "SoHo": "10012",
+      "Lower East Side": "10002",
+      "Upper West Side": "10024",
+      "Upper East Side": "10021",
+      "Harlem": "10027",
+      "Financial District": "10004",
+      "Midtown": "10019"
+    };
+    const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+    // ===== Helpers stato =====
+    function readState(){
+      const maxRent = Math.max(0, parseInt(document.getElementById('maxRent').value || '3000', 10));
+      const bedsMin = document.getElementById('bedsMin').value;
+      const zip = (document.getElementById('zip').value || '').trim();
+      const noFee = document.getElementById('noFee').checked;
+      return { maxRent, bedsMin, zip, noFee };
+    }
+    function updateLabel(){ document.getElementById('maxRentLabel').textContent = fmt.format(readState().maxRent); }
+
+    // ===== ZIP pills =====
+    const zipPills = document.getElementById('zipPills');
+    function renderZipPills(){
+      zipPills.innerHTML = '';
+      const current = document.getElementById('zip').value;
+      MANHATTAN_ZIPS.forEach(z => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'px-3 py-1 rounded-full border border-gray-400 bg-gray-100 text-gray-800 text-sm font-medium hover:bg-green-500 hover:text-white hover:border-green-500 transition';
+        b.textContent = z;
+        if (current === z) b.classList.add('zip-btn-active');
+        b.addEventListener('click', () => {
+          const input = document.getElementById('zip');
+          if (input.value === z) input.value = '';
+          else input.value = z;
+          renderZipPills();
+        });
+        zipPills.appendChild(b);
+      });
+    }
+
+    // ===== Quartieri rapidi =====
+    (function renderHoods(){
+      const box = document.getElementById('hoodPills');
+      Object.entries(HOODS).forEach(([name, zip])=>{
+        const b = document.createElement('button');
+        b.type='button';
+        b.className='px-3 py-1 rounded-full border border-muted bg-surface text-sm hover:bg-green-500 hover:text-white transition';
+        b.textContent=name;
+        b.addEventListener('click', ()=>{
+          document.getElementById('zip').value = zip;
+          renderZipPills();
+          showToast(`${name} → ZIP ${zip}`);
+        });
+        box.appendChild(b);
+      });
+    })();
+
+    // ===== Beds segmented =====
+    (function initBedsSeg(){
+      const seg = document.getElementById('bedsSeg');
+      const hidden = document.getElementById('bedsMin');
+      const setActive = (val)=>{
+        hidden.value = val;
+        [...seg.children].forEach(b=>b.classList.remove('seg-active'));
+        const btn = [...seg.children].find(b=>b.dataset.beds===val);
+        if (btn) btn.classList.add('seg-active');
+      };
+      seg.addEventListener('click', (e)=>{
+        const b = e.target.closest('button[data-beds]');
+        if (!b) return;
+        setActive(b.dataset.beds);
+        buildProviderCards();
+      });
+      // stato iniziale da querystring
+      setActive(hidden.value || '');
+    })();
+
+    // ===== Provider links =====
+    function getProviderLinks({ maxRent, bedsMin, zip, noFee }){
+      const enc = encodeURIComponent;
+      const bedsParam = bedsMin ? bedsMin : '';
+      let se = `https://streeteasy.com/for-rent/manhattan?max_price=${maxRent}`;
+      if (bedsParam) se += `&beds=${bedsParam}`;
+      if (noFee) se += `&no_fee=true`;
+      if (zip) se += `&search=zip:${zip}`;
+      let zl = `https://www.zillow.com/manhattan-new-york-ny/rentals/?price=0-${maxRent}`;
+      if (bedsParam) zl += `&beds=${bedsParam}-_`;
+      if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
+      let rh = `https://www.renthop.com/apartments-for-rent/nyc/manhattan?max_price=${maxRent}`;
+      if (bedsParam) rh += `&min_beds=${bedsParam}`;
+      if (noFee) rh += `&has_fee=false`;
+      if (zip) rh += `&q=${zip}`;
+      let cl = `https://newyork.craigslist.org/search/mnh/apa?max_price=${maxRent}`;
+      if (bedsParam) cl += `&min_bedrooms=${bedsParam}`;
+      if (zip) cl += `&query=${enc(zip)}`;
+      let rl = `https://www.realtor.com/apartments/Manhattan_NY/price-na-${maxRent}`;
+      if (bedsParam) rl += `/beds-${bedsParam}`;
+      if (zip) rl = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
+      let hp = `https://hotpads.com/manhattan-new-york-ny/apartments-for-rent?price=-${maxRent}`;
+      if (bedsParam) hp += `&beds=${bedsParam}`;
+      if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
+      return [
+        { name: 'RentHop ✅', url: rh },
+        { name: 'Craigslist (Manhattan) ✅', url: cl },
+        { name: 'Realtor', url: rl },
+        { name: 'HotPads', url: hp },
+        { name: 'StreetEasy ⚠️', url: se },
+        { name: 'Zillow ⚠️', url: zl },
+      ];
+    }
+
+    function buildProviderCards(){
+      const { maxRent, bedsMin, zip, noFee } = readState();
+      const p = document.getElementById('providers');
+      p.innerHTML = '';
+      const providers = getProviderLinks({ maxRent, bedsMin, zip, noFee });
+      providers.forEach(pr => {
+        const a = document.createElement('a');
+        a.href = pr.url; a.target = '_blank'; a.rel = 'noopener';
+        a.className = 'card block border border-muted rounded-2xl bg-surface p-4';
+        a.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold">${pr.name}</h3>
+            <span class="inline-flex items-center gap-1 text-sm text-muted">
+              apri ricerca
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="opacity-70">
+                <path d="M7 17L17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </div>
+          <p class="text-sm text-muted">
+            Filtri: Manhattan · max ${fmt.format(maxRent)}${zip?` · ZIP ${zip}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}
+          </p>`;
+        p.appendChild(a);
+      });
+
+      // share url
+      const params = new URLSearchParams();
+      params.set('max', String(maxRent));
+      if (bedsMin) params.set('beds', bedsMin);
+      if (zip) params.set('zip', zip);
+      if (noFee) params.set('nofee', '1');
+      history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
+    }
+
+    // ===== Strict (serverless) =====
+    const API_BASE = 'https://rent-finder-manhattan.vercel.app'; // <-- cambia se il tuo dominio è diverso
+    async function loadStrict(){
+      const { maxRent, bedsMin, zip } = readState();
+      const params = new URLSearchParams({ max: String(maxRent) });
+      if (bedsMin) params.set('beds', String(bedsMin));
+      if (zip) params.set('zip', zip);
+
+      const box = document.getElementById('strictBox');
+      box.innerHTML = '<div class="text-sm text-muted">Caricamento…</div>';
+      try {
+        const res = await fetch(`${API_BASE}/api/listings?${params.toString()}`);
+        const json = await res.json();
+        box.innerHTML = '';
+        if (!json.data || !json.data.length){
+          box.innerHTML = '<div class="text-sm text-muted">Nessun risultato ≤ $3.000 trovato con questi filtri.</div>';
+          return;
+        }
+        json.data.forEach(l => {
+          const a = document.createElement('a');
+          a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
+          a.className = 'card block border border-muted rounded-2xl bg-surface p-4';
+          a.innerHTML = `
+            <div class="flex items-center justify-between mb-1">
+              <div class="font-semibold truncate pr-2">${l.title || 'Listing'}</div>
+              <span class="text-sm">$${l.price || ''}</span>
+            </div>
+            <div class="text-sm text-muted">ZIP ${l.zipcode || '—'}</div>
+            <div class="text-xs text-muted mt-1">Fonte: Craigslist</div>
+          `;
+          box.appendChild(a);
+        });
+      } catch (e) {
+        box.innerHTML = '<div class="text-sm text-red-600">Errore nel caricamento.</div>';
+      }
+    }
+
+    // ===== Toast & util =====
+    function showToast(msg='Fatto!'){
+      const t=document.getElementById('toast');
+      t.textContent=msg;
+      t.classList.remove('opacity-0');
+      setTimeout(()=>t.classList.add('opacity-0'),1400);
+    }
+    document.getElementById('copy').addEventListener('click', async ()=>{
+      try{ await navigator.clipboard.writeText(location.href); showToast('Link copiato'); }
+      catch{ showToast('Impossibile copiare'); }
     });
 
-    // resto script = buildProviderCards, loadStrict, salvataggi... (uguale al file precedente)
+    // ===== Salvataggi =====
+    function saveCurrent(){
+      const s = readState();
+      const saved = JSON.parse(localStorage.getItem('savedSearches')||'[]');
+      saved.unshift({ ...s, at: Date.now() });
+      localStorage.setItem('savedSearches', JSON.stringify(saved.slice(0, 12)));
+      renderSaved(); showToast('Ricerca salvata');
+    }
+    function renderSaved(){
+      const box = document.getElementById('saved');
+      box.innerHTML='';
+      const saved = JSON.parse(localStorage.getItem('savedSearches')||'[]');
+      if (!saved.length){ box.innerHTML = '<p class="text-sm text-muted">Nessuna ricerca salvata.</p>'; return; }
+      saved.forEach((s,idx)=>{
+        const d = new Date(s.at);
+        const card = document.createElement('div');
+        card.className = 'border border-muted rounded-2xl bg-surface p-3';
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-medium">${fmt.format(s.maxRent)}${s.zip?` · ${s.zip}`:''}${s.bedsMin?` · ${s.bedsMin}+bd`:''}${s.noFee?` · no-fee`:''}</div>
+              <div class="text-xs text-muted">${d.toLocaleString()}</div>
+            </div>
+            <div class="flex gap-2">
+              <button class="text-xs px-2 py-1 border border-muted rounded" data-act="load">Apri</button>
+              <button class="text-xs px-2 py-1 border border-muted rounded" data-act="del">Elimina</button>
+            </div>
+          </div>`;
+        card.addEventListener('click', (ev)=>{
+          const t = ev.target; if (!(t instanceof HTMLElement)) return;
+          if (t.dataset.act==='del'){
+            const arr = JSON.parse(localStorage.getItem('savedSearches')||'[]');
+            arr.splice(idx,1); localStorage.setItem('savedSearches', JSON.stringify(arr));
+            renderSaved();
+          }
+          if (t.dataset.act==='load'){
+            document.getElementById('maxRent').value = s.maxRent;
+            document.getElementById('bedsMin').value = s.bedsMin||'';
+            document.getElementById('zip').value = s.zip||'';
+            document.getElementById('noFee').checked = !!s.noFee;
+            updateLabel(); renderZipPills(); buildProviderCards(); showToast('Ricerca caricata');
+          }
+        });
+        box.appendChild(card);
+      });
+    }
+
+    // ===== Reset =====
+    document.getElementById('reset').addEventListener('click', ()=>{
+      document.getElementById('maxRent').value = 3000;
+      document.getElementById('bedsMin').value = '';
+      document.getElementById('zip').value = '';
+      document.getElementById('noFee').checked = false;
+      updateLabel(); renderZipPills(); buildProviderCards(); showToast('Filtri ripristinati');
+    });
+
+    // ===== Listeners base =====
+    document.getElementById('build').addEventListener('click', buildProviderCards);
+    document.getElementById('save').addEventListener('click', saveCurrent);
+    document.getElementById('strict').addEventListener('click', loadStrict);
+    document.getElementById('maxRent').addEventListener('input', updateLabel);
+
+    // ===== Init da querystring =====
+    (function initFromQuery(){
+      const u = new URL(location.href);
+      const max = u.searchParams.get('max');
+      const beds = u.searchParams.get('beds');
+      const zip = u.searchParams.get('zip');
+      const nofee = u.searchParams.get('nofee');
+      if (max) document.getElementById('maxRent').value = max;
+      if (beds) document.getElementById('bedsMin').value = beds; // hidden per segmentato
+      if (zip) document.getElementById('zip').value = zip;
+      if (nofee) document.getElementById('noFee').checked = true;
+      updateLabel(); renderZipPills(); buildProviderCards(); renderSaved();
+      // attiva bottone segmentato coerente con hidden
+      const seg = document.getElementById('bedsSeg');
+      [...seg.children].forEach(b=>b.classList.toggle('seg-active', b.dataset.beds === (beds||'')));
+    })();
   </script>
 </body>
 </html>
