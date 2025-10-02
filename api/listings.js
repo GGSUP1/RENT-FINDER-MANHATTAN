@@ -19,23 +19,26 @@ module.exports = async (req, res) => {
     const beds = parseInt(req.query.beds || "0", 10);
     const zip  = (req.query.zip || "").trim();
 
-    // Costruisco l’URL Craigslist RSS
+    // URL Craigslist RSS
     let clUrl = `https://newyork.craigslist.org/search/mnh/apa?format=rss&max_price=${max}`;
     if (beds) clUrl += `&min_bedrooms=${beds}`;
     if (zip)  clUrl += `&query=${encodeURIComponent(zip)}`;
 
-    // Passo per AllOrigins
+    // Proxy via AllOrigins
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(clUrl)}`;
-
     const resp = await fetch(proxyUrl);
-    if (!resp.ok) {
-      throw new Error(`proxy_http_${resp.status}`);
-    }
+    if (!resp.ok) throw new Error(`proxy_http_${resp.status}`);
     const data = await resp.json();
 
-    // Parsiamo il contenuto RSS
     const feed = await parser.parseString(data.contents);
 
+    // --- DEBUG: loggo tutti gli item ricevuti ---
+    console.log("DEBUG feed length:", feed.items?.length || 0);
+    (feed.items || []).forEach((it, idx) => {
+      console.log(`RAW[${idx}]`, it.title, "|", it.link);
+    });
+
+    // Parsing e filtro
     const listings = (feed.items || [])
       .map(it => {
         const text = `${it.title || ""} ${it.contentSnippet || ""}`;
@@ -48,8 +51,8 @@ module.exports = async (req, res) => {
       .filter(l => typeof l.price === "number" && l.price <= max)
       .filter(l => zip ? l.zipcode === zip : (l.zipcode ? ZIPS.has(l.zipcode) : true));
 
-    res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
-    res.status(200).json({ data: listings });
+    res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
+    res.status(200).json({ data: listings, debugCount: feed.items?.length || 0 });
   } catch (err) {
     console.error("API /api/listings error:", err);
     res.status(500).json({ error: "upstream_error", detail: String(err && err.message || err) });
