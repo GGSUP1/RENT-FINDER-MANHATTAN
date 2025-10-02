@@ -1,18 +1,6 @@
 // api/listings.js
 const Parser = require("rss-parser");
-
-const parser = new Parser({
-  timeout: 15000,
-  requestOptions: {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-      "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Referer": "https://newyork.craigslist.org/search/mnh/apa"
-    }
-  }
-});
+const parser = new Parser();
 
 const ZIPS = new Set([
   "10001","10002","10003","10004","10005","10006","10007","10009","10010","10011","10012","10013","10014",
@@ -31,12 +19,22 @@ module.exports = async (req, res) => {
     const beds = parseInt(req.query.beds || "0", 10);
     const zip  = (req.query.zip || "").trim();
 
+    // Costruisco l’URL Craigslist RSS
     let clUrl = `https://newyork.craigslist.org/search/mnh/apa?format=rss&max_price=${max}`;
     if (beds) clUrl += `&min_bedrooms=${beds}`;
     if (zip)  clUrl += `&query=${encodeURIComponent(zip)}`;
 
-    // Unico tentativo: parser con headers
-    const feed = await parser.parseURL(clUrl);
+    // Passo per AllOrigins
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(clUrl)}`;
+
+    const resp = await fetch(proxyUrl);
+    if (!resp.ok) {
+      throw new Error(`proxy_http_${resp.status}`);
+    }
+    const data = await resp.json();
+
+    // Parsiamo il contenuto RSS
+    const feed = await parser.parseString(data.contents);
 
     const listings = (feed.items || [])
       .map(it => {
