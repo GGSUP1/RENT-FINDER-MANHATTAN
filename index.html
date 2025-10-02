@@ -87,7 +87,7 @@
   </main>
 
   <script>
-    // ... [codice invariato qui sopra] ...
+    // === Inizializzazioni aggiuntive ===\n// Manhattan ZIPs (whitelist rapida)\nconst MANHATTAN_ZIPS = [\n  '10001','10002','10003','10004','10005','10006','10007','10009','10010','10011','10012','10013','10014',\n  '10016','10017','10018','10019','10020','10021','10022','10023','10024','10025','10026','10027','10028',\n  '10029','10030','10031','10032','10033','10034','10035','10036','10037','10038','10039','10040','10044',\n  '10045','10048','10055','10065','10069','10075','10080','10103','10110','10111','10112','10115','10128',\n  '10271','10278','10279','10280','10282'\n];\n\n// Popola i "tasti" ZIP\n(function renderZipPills(){\n  const zipPills = document.getElementById('zipPills');\n  if (!zipPills) return;\n  zipPills.innerHTML = '';\n  MANHATTAN_ZIPS.forEach(z => {\n    const b = document.createElement('button');\n    b.type = 'button';\n    b.className = 'px-3 py-1 rounded-full bg-white border text-sm hover:shadow';\n    b.textContent = z;\n    b.addEventListener('click', ()
 
     function getProviderLinks({ maxRent, bedsMin, zip, noFee }){
       const enc = encodeURIComponent;
