@@ -16,7 +16,7 @@
   <main class="max-w-6xl mx-auto p-6">
     <header class="mb-6">
       <h1 class="text-3xl md:text-4xl font-bold">Affitti a Manhattan ≤ <span id="maxRentLabel">$3,000</span></h1>
-      <p class="text-sm text-gray-600 mt-1">Pagina statica, nessuno scraping: genera <strong>link diretti</strong> con filtri precompilati su StreetEasy, Zillow, RentHop, Craigslist e Realtor. I portali potrebbero richiedere un clic aggiuntivo per applicare tutti i filtri.</p>
+      <p class="text-sm text-gray-600 mt-1">Pagina statica, nessuno scraping: genera <strong>link diretti</strong> con filtri precompilati su vari portali. Alcuni portali potrebbero richiedere un clic aggiuntivo per applicare tutti i filtri.</p>
     </header>
 
     <!-- Controls -->
@@ -57,6 +57,13 @@
       <div id="zipPills" class="flex flex-wrap gap-2"></div>
     </section>
 
+    <!-- Avviso per portali con limiti -->
+    <section class="mb-4">
+      <div class="p-3 border border-yellow-400 bg-yellow-50 rounded-xl text-sm text-yellow-800">
+        ⚠️ Attenzione: StreetEasy e Zillow possono mostrare annunci sponsorizzati o con "net effective rent" sopra i $3.000, anche se imposti il filtro. Usa la sezione <strong>Strict ≤$3k</strong> per risultati garantiti.
+      </div>
+    </section>
+
     <!-- Results (link-out) -->
     <section class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="providers"></section>
 
@@ -80,14 +87,56 @@
   </main>
 
   <script>
-    // ... [tutto il codice esistente invariato qui sopra] ...
+    // ... [codice invariato qui sopra] ...
+
+    function getProviderLinks({ maxRent, bedsMin, zip, noFee }){
+      const enc = encodeURIComponent;
+      const bedsParam = bedsMin ? bedsMin : '';
+
+      // RentHop (rigido)
+      let rh = `https://www.renthop.com/apartments-for-rent/nyc/manhattan?max_price=${maxRent}`;
+      if (bedsParam) rh += `&min_beds=${bedsParam}`;
+      if (noFee) rh += `&has_fee=false`;
+      if (zip) rh += `&q=${zip}`;
+
+      // Craigslist
+      let cl = `https://newyork.craigslist.org/search/mnh/apa?max_price=${maxRent}`;
+      if (bedsParam) cl += `&min_bedrooms=${bedsParam}`;
+      if (zip) cl += `&query=${enc(zip)}`;
+
+      // Realtor
+      let rl = `https://www.realtor.com/apartments/Manhattan_NY/price-na-${maxRent}`;
+      if (bedsParam) rl += `/beds-${bedsParam}`;
+      if (zip) rl = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
+
+      // HotPads
+      let hp = `https://hotpads.com/manhattan-new-york-ny/apartments-for-rent?price=-${maxRent}`;
+      if (bedsParam) hp += `&beds=${bedsParam}`;
+      if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
+
+      // StreetEasy (con nota di attenzione)
+      let se = `https://streeteasy.com/for-rent/manhattan?max_price=${maxRent}`;
+      if (bedsParam) se += `&beds=${bedsParam}`;
+      if (noFee) se += `&no_fee=true`;
+      if (zip) se += `&search=zip:${zip}`;
+
+      // Zillow (con nota di attenzione)
+      let zl = `https://www.zillow.com/manhattan-new-york-ny/rentals/?price=0-${maxRent}`;
+      if (bedsParam) zl += `&beds=${bedsParam}-_`;
+      if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
+
+      return [
+        { name: 'RentHop ✅', url: rh },
+        { name: 'Craigslist (Manhattan) ✅', url: cl },
+        { name: 'Realtor', url: rl },
+        { name: 'HotPads', url: hp },
+        { name: 'StreetEasy ⚠️', url: se },
+        { name: 'Zillow ⚠️', url: zl },
+      ];
+    }
 
     // ===== Strict mode (serverless) =====
-    // Se la pagina è su Vercel, lascia vuoto:
     const API_BASE = '';
-    // Se la pagina è su GitHub Pages e l’API è su Vercel, usa il dominio Vercel:
-    // const API_BASE = 'https://rent-finder-manhattan.vercel.app';
-
     async function loadStrict(){
       const maxRent = document.getElementById('maxRent').value || 3000;
       const bedsMin = document.getElementById('bedsMin').value || '';
@@ -127,6 +176,8 @@
       }
     }
 
+    document.getElementById('build').addEventListener('click', buildProviderCards);
+    document.getElementById('save').addEventListener('click', saveCurrent);
     document.getElementById('strict').addEventListener('click', loadStrict);
   </script>
 </body>
