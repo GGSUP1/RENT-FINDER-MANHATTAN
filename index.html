@@ -179,6 +179,35 @@
     document.getElementById('build').addEventListener('click', buildProviderCards);
     document.getElementById('save').addEventListener('click', saveCurrent);
     document.getElementById('strict').addEventListener('click', loadStrict);
+    <script>
+// --- ZIP pills: versione a prova di timing ---
+window.addEventListener('DOMContentLoaded', () => {
+  const MANHATTAN_ZIPS = [
+    '10001','10002','10003','10004','10005','10006','10007','10009','10010','10011','10012','10013','10014',
+    '10016','10017','10018','10019','10020','10021','10022','10023','10024','10025','10026','10027','10028',
+    '10029','10030','10031','10032','10033','10034','10035','10036','10037','10038','10039','10040','10044',
+    '10045','10048','10055','10065','10069','10075','10080','10103','10110','10111','10112','10115','10128',
+    '10271','10278','10279','10280','10282'
+  ];
+
+  const zipPills = document.getElementById('zipPills');
+  if (!zipPills) return;
+
+  zipPills.innerHTML = '';
+  MANHATTAN_ZIPS.forEach(z => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'px-3 py-1 rounded-full bg-white text-gray-800 border border-gray-300 text-sm hover:shadow';
+    b.textContent = z;
+    b.addEventListener('click', () => {
+      const input = document.getElementById('zip');
+      if (input) input.value = z;
+    });
+    zipPills.appendChild(b);
+  });
+});
+</script>
+
   </script>
 </body>
 </html>
