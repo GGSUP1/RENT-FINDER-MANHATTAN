@@ -10,12 +10,6 @@
     .btn {
       @apply px-3 py-2 rounded-xl text-sm font-medium transition;
     }
-    .zip-btn {
-      @apply px-3 py-1 rounded-full border border-gray-400 bg-gray-100 text-gray-800 text-sm font-medium cursor-pointer transition;
-    }
-    .zip-btn:hover {
-      @apply bg-green-500 text-white border-green-500;
-    }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-100">
@@ -73,9 +67,7 @@
     <!-- ZIP pills -->
     <section>
       <h2 class="text-lg font-semibold mb-3">ZIP Manhattan rapidi</h2>
-      <div id="zipPills" class="flex flex-wrap gap-2">
-        <!-- Generati da JS -->
-      </div>
+      <div id="zipPills" class="flex flex-wrap gap-2"></div>
     </section>
 
     <!-- Avviso -->
@@ -101,27 +93,6 @@
 
   </main>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const MANHATTAN_ZIPS = [
-        "10001","10002","10003","10004","10005","10006","10007","10009","10010","10011","10012","10013","10014",
-        "10016","10017","10018","10019","10020","10021","10022","10023","10024","10025","10026","10027","10028",
-        "10029","10030","10031","10032","10033","10034","10035","10036","10037","10038","10039","10040","10044",
-        "10045","10048","10055","10065","10069","10075","10080","10103","10110","10111","10112","10115","10128",
-        "10271","10278","10279","10280","10282"
-      ];
-      const zipPills = document.getElementById("zipPills");
-      MANHATTAN_ZIPS.forEach(z => {
-        const b = document.createElement("button");
-        b.textContent = z;
-        b.className = "zip-btn";
-        b.addEventListener("click", () => {
-          document.getElementById("zip").value = z;
-        });
-        zipPills.appendChild(b);
-      });
-    });
-  </script>
-
+  <script src="script.js"></script>
 </body>
 </html>
