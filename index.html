@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KeyCap NYC — Affitti a Manhattan ≤ $3.000</title>
-  <meta name="description" content="KeyCap NYC: affitti a Manhattan entro $3.000 con link diretti ai principali portali (StreetEasy, Zillow, RentHop, Craigslist, Realtor). Filtri rapidi, ZIP e strict mode." />
+  <meta name="description" content="KeyCap NYC: affitti a Manhattan entro $3.000 con link diretti ai principali portali (StreetEasy, Zillow, RentHop, Craigslist, Realtor, HotPads). Filtri rapidi, ZIP e strict mode." />
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Inter font -->
@@ -17,9 +17,9 @@
     .card{ transition: transform .15s ease, box-shadow .15s ease; }
     .card:hover{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
 
-    /* Theme tokens (light) */
+    /* Theme tokens (dark) */
     :root{
-      --bg: #0b0c10;        /* dark base */
+      --bg: #0b0c10;
       --fg: #f7f8fa;
       --surface: #11151c;
       --muted: #9aa3ae;
@@ -40,8 +40,8 @@
 
     /* SOLO per i bottoni "Letti min": più compatti */
     .beds-btn{
-      padding: .35rem .6rem;      /* px-2 py-[~] */
-      font-size: .85rem;          /* text-sm-ish */
+      padding: .35rem .6rem;
+      font-size: .85rem;
       border-radius: .6rem;
       border: 1px solid var(--border);
       background: var(--surface);
@@ -52,7 +52,6 @@
     .beds-btn:hover{ background: rgba(22,163,74,.10); border-color: var(--accent); }
     .beds-active{ background: var(--accent) !important; color:#fff !important; border-color: var(--accent) !important; }
 
-    /* Inputs */
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
     input[type="checkbox"]{ accent-color: var(--accent); }
@@ -87,7 +86,7 @@
       </div>
     </header>
 
-    <!-- ====== CONTROLS ====== -->
+    <!-- ====== CONTROLLI ====== -->
     <section class="grid md:grid-cols-4 gap-3 items-end mb-6">
       <div>
         <label class="block text-sm font-semibold mb-1" for="maxRent">Budget massimo ($)</label>
@@ -129,7 +128,6 @@
     <!-- ====== ZIP PILLS ====== -->
     <section class="mt-6 mb-2">
       <h2 class="text-lg font-semibold mb-3">ZIP Manhattan rapidi</h2>
-      <!-- griglia ordinata e compatta -->
       <div id="zipPills" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 mt-1 text-sm"></div>
     </section>
 
@@ -139,8 +137,26 @@
       <div id="hoodPills" class="flex flex-wrap gap-2"></div>
     </section>
 
+    <!-- ====== LEGENDA BADGE ====== -->
+    <section class="mt-6">
+      <div class="flex flex-wrap items-center gap-3 text-sm text-muted">
+        <span class="inline-flex items-center gap-1">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-600 text-white text-[11px]">✔</span>
+          Validato
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-yellow-500 text-black text-[11px]">!</span>
+          Può sforare
+        </span>
+        <span class="inline-flex items-center gap-1">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-600 text-white text-[11px]">⛓</span>
+          Link diretto
+        </span>
+      </div>
+    </section>
+
     <!-- ====== AVVISO ====== -->
-    <section class="mt-6 mb-6">
+    <section class="mt-3 mb-6">
       <div class="rounded-xl px-4 py-3 text-sm border border-[var(--warn-br)] bg-[var(--warn-bg)] text-[var(--warn-fg)]">
         ⚠️ StreetEasy e Zillow possono mostrare annunci sponsorizzati o con “net effective rent” sopra i $3.000 anche con filtro attivo.
         Usa <strong>Strict ≤$3k</strong> per risultati garantiti.
@@ -194,7 +210,7 @@
     };
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-    // ===== Stato =====
+    // ===== Stato/Label =====
     function readState(){
       const maxRent = Math.max(0, parseInt(document.getElementById('maxRent').value || '3000', 10));
       const bedsMin = document.getElementById('bedsMin').value;
@@ -205,7 +221,7 @@
     function updateLabel(){ document.getElementById('maxRentLabel').textContent = fmt.format(readState().maxRent); }
     document.getElementById('maxRent').addEventListener('input', updateLabel);
 
-    // ===== Beds segmented =====
+    // ===== Letti min (segment) =====
     (function initBedsSeg(){
       const seg = document.getElementById('bedsSeg');
       const hidden = document.getElementById('bedsMin');
@@ -265,45 +281,68 @@
       });
     })();
 
-    // ===== Provider URLs =====
+    // ===== Provider URLs + BADGE =====
+    // status: 'validated' | 'caution' | 'link'
     function getProviderLinks({ maxRent, bedsMin, zip, noFee }){
       const enc = encodeURIComponent;
       const bedsParam = bedsMin ? bedsMin : '';
 
+      // StreetEasy
       let se = `https://streeteasy.com/for-rent/manhattan?max_price=${maxRent}`;
       if (bedsParam) se += `&beds=${bedsParam}`;
       if (noFee) se += `&no_fee=true`;
       if (zip) se += `&search=zip:${zip}`;
 
+      // Zillow
       let zl = `https://www.zillow.com/manhattan-new-york-ny/rentals/?price=0-${maxRent}`;
       if (bedsParam) zl += `&beds=${bedsParam}-_`;
       if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
 
+      // RentHop
       let rh = `https://www.renthop.com/apartments-for-rent/nyc/manhattan?max_price=${maxRent}`;
       if (bedsParam) rh += `&min_beds=${bedsParam}`;
       if (noFee) rh += `&has_fee=false`;
       if (zip) rh += `&q=${zip}`;
 
+      // Craigslist
       let cl = `https://newyork.craigslist.org/search/mnh/apa?max_price=${maxRent}`;
       if (bedsParam) cl += `&min_bedrooms=${bedsParam}`;
       if (zip) cl += `&query=${enc(zip)}`;
 
+      // Realtor
       let rl = `https://www.realtor.com/apartments/Manhattan_NY/price-na-${maxRent}`;
       if (bedsParam) rl += `/beds-${bedsParam}`;
       if (zip) rl = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
 
+      // HotPads
       let hp = `https://hotpads.com/manhattan-new-york-ny/apartments-for-rent?price=-${maxRent}`;
       if (bedsParam) hp += `&beds=${bedsParam}`;
       if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
 
       return [
-        { name: 'RentHop ✅', url: rh },
-        { name: 'Craigslist (Manhattan) ✅', url: cl },
-        { name: 'Realtor', url: rl },
-        { name: 'HotPads', url: hp },
-        { name: 'StreetEasy ⚠️', url: se },
-        { name: 'Zillow ⚠️', url: zl },
+        { name: 'RentHop',               url: rh, status: 'validated' },
+        { name: 'Craigslist (Manhattan)',url: cl, status: 'validated' },
+        { name: 'Realtor',               url: rl, status: 'link'      },
+        { name: 'HotPads',               url: hp, status: 'link'      },
+        { name: 'StreetEasy',            url: se, status: 'caution'   },
+        { name: 'Zillow',                url: zl, status: 'caution'   },
       ];
+    }
+
+    function badgeHTML(status){
+      if (status === 'validated') {
+        return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-600 text-white">
+                  ✔ Validato
+                </span>`;
+      }
+      if (status === 'caution') {
+        return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-yellow-500 text-black">
+                  ⚠️ Può sforare
+                </span>`;
+      }
+      return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-slate-600 text-white">
+                ⛓ Link diretto
+              </span>`;
     }
 
     function buildProviderCards(){
@@ -319,12 +358,15 @@
         a.innerHTML = `
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold">${pr.name}</h3>
-            <span class="inline-flex items-center gap-1 text-sm text-muted">
-              apri ricerca
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="opacity-70">
-                <path d="M7 17L17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
+            <div class="flex items-center gap-2">
+              ${badgeHTML(pr.status)}
+              <span class="inline-flex items-center gap-1 text-sm text-muted">
+                apri ricerca
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="opacity-70">
+                  <path d="M7 17L17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
           </div>
           <p class="text-sm text-muted">
             Filtri: Manhattan · max ${fmt.format(maxRent)}${zip?` · ZIP ${zip}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}
