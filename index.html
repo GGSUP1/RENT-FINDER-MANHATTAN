@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KeyCap NYC — Affitti a Manhattan ≤ $3.000</title>
-  <meta name="description" content="KeyCap NYC: affitti a Manhattan entro $3.000 con link diretti ai principali portali (StreetEasy, Zillow, RentHop, Craigslist, Realtor, HotPads). Filtri rapidi, ZIP e strict mode." />
+  <meta name="description" content="KeyCap NYC: affitti a Manhattan entro $3.000 con link diretti ai principali portali. Filtri rapidi, ZIP e strict mode con un assistente AI che capisce il linguaggio naturale." />
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Inter font -->
@@ -85,6 +85,29 @@
         </p>
       </div>
     </header>
+
+    <!-- ====== AI ASSIST ====== -->
+    <section class="mb-6">
+      <div class="bg-surface border border-muted rounded-2xl p-4">
+        <div class="flex items-start gap-3">
+          <div class="shrink-0 w-9 h-9 rounded-lg bg-[var(--accent)] text-white flex items-center justify-center font-black">AI</div>
+          <div class="w-full">
+            <label class="block text-sm font-semibold mb-2">Chiedi a KeyCap (linguaggio naturale)</label>
+            <div class="flex gap-2">
+              <input id="aiInput" placeholder="Es: cerca sotto 2700$ a East Village, 1+ letto, no fee"
+                     class="flex-1 border border-muted rounded-xl p-3 bg-transparent text-sm" />
+              <button id="aiGo" class="px-4 py-2 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-700)] text-white text-sm">
+                Applica
+              </button>
+            </div>
+            <div id="aiTips" class="text-xs text-muted mt-2">
+              Capisco budget (es. 2.7k, 2700$), letti (studio, 1+, due camere), ZIP/quartieri (SoHo, Harlem, 10009), “no-fee”.
+            </div>
+            <div id="aiExplain" class="mt-3 text-sm text-muted"></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- ====== CONTROLLI ====== -->
     <section class="grid md:grid-cols-4 gap-3 items-end mb-6">
@@ -208,6 +231,13 @@
       "Financial District": "10004",
       "Midtown": "10019"
     };
+    // Piccolo dataset euristico per consigli (valori più bassi => più accessibile)
+    const ZIP_ACCESS = {
+      "10027": 0.65, "10029": 0.68, "10009": 0.72, "10011": 0.90, "10012": 0.96,
+      "10014": 0.98, "10024": 0.80, "10021": 0.92, "10019": 0.88, "10002": 0.78,
+      "10025": 0.75, "10033": 0.70, "10034": 0.66, "10028": 0.83, "10003": 0.91
+    };
+    const HOOD_TO_ZIP = Object.fromEntries(Object.entries(HOODS).map(([h,z])=>[h.toLowerCase(),z]));
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
     // ===== Stato/Label =====
@@ -282,7 +312,6 @@
     })();
 
     // ===== Provider URLs + BADGE =====
-    // status: 'validated' | 'caution' | 'link'
     function getProviderLinks({ maxRent, bedsMin, zip, noFee }){
       const enc = encodeURIComponent;
       const bedsParam = bedsMin ? bedsMin : '';
@@ -328,7 +357,6 @@
         { name: 'Zillow',                url: zl, status: 'caution'   },
       ];
     }
-
     function badgeHTML(status){
       if (status === 'validated') {
         return `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-600 text-white">
@@ -344,13 +372,12 @@
                 ⛓ Link diretto
               </span>`;
     }
-
     function buildProviderCards(){
       const { maxRent, bedsMin, zip, noFee } = readState();
       const p = document.getElementById('providers');
       p.innerHTML = '';
-
       const providers = getProviderLinks({ maxRent, bedsMin, zip, noFee });
+
       providers.forEach(pr => {
         const a = document.createElement('a');
         a.href = pr.url; a.target = '_blank'; a.rel = 'noopener';
@@ -500,6 +527,102 @@
     document.getElementById('save').addEventListener('click', saveCurrent);
     document.getElementById('strict').addEventListener('click', loadStrict);
 
+    // ===== AI Assist =====
+    function aiParse(query){
+      const original = query;
+      let q = query.toLowerCase();
+
+      // budget: 2.7k / 2700 / $2700
+      let budget = null;
+      const mK = q.match(/(\d+(?:[\.,]\d+)?)\s*k/); // 2.7k
+      const mDollar = q.match(/\$?\s*(\d{3,5})(?!k)/); // 2700
+      if (mK) {
+        budget = Math.round(parseFloat(mK[1].replace(',','.')) * 1000);
+      } else if (mDollar) {
+        budget = parseInt(mDollar[1].replace(/[^\d]/g,''), 10);
+      }
+
+      // letti: studio / 1+ / due / 2 camere / one bedroom
+      let beds = null;
+      if (/\bstudio\b/.test(q)) beds = '0';
+      if (/\b1\+|\bone\b|\b1 bedroom\b/.test(q)) beds = '1';
+      if (/\b2\+|\btwo\b|2 camere|2 bedroom/.test(q)) beds = '2';
+      if (/\b3\+|\bthree\b|3 camere|3 bedroom/.test(q)) beds = '3';
+
+      // no-fee
+      const nofee = /\bno[\s-]?fee\b|senza\s*fee|no\s*commission/i.test(original);
+
+      // zip / quartiere
+      let zip = null;
+      const zipMatch = q.match(/\b(10\d{3})\b/);
+      if (zipMatch) zip = zipMatch[1];
+      // quartiere noto
+      Object.keys(HOOD_TO_ZIP).forEach(h=>{
+        if (q.includes(h)) zip = HOOD_TO_ZIP[h];
+      });
+
+      return { budget, beds, zip, nofee, _debug: { original } };
+    }
+
+    function aiSuggest({ budget, beds, zip }){
+      // Heuristica: ordina ZIP_ACCESS per valore crescente (più accessibile) e filtra
+      const entries = Object.entries(ZIP_ACCESS);
+      const sorted = entries.sort((a,b)=>a[1]-b[1]);
+      const picks = [];
+      for (const [z,score] of sorted){
+        if (picks.length >= 3) break;
+        // Se l'utente ha fornito un ZIP molto caro, proponi alternative più accessibili
+        if (zip && z === zip) continue;
+        picks.push({ zip:z, score });
+      }
+      // Messaggio esplicativo
+      const notes = [];
+      if (budget && budget < 3000){
+        notes.push(`Per un budget intorno a ${fmt.format(budget)}, considera ZIP più accessibili come ${picks.map(p=>p.zip).slice(0,2).join(', ')}.`);
+      }
+      if (beds && beds !== '0'){
+        notes.push(`Con ${beds}+ letti la disponibilità migliora in zone come ${picks.map(p=>p.zip).slice(0,2).join(', ')} rispetto a SoHo/West Village.`);
+      }
+      return { picks, notes };
+    }
+
+    async function runAI(){
+      const input = document.getElementById('aiInput').value.trim();
+      const out = document.getElementById('aiExplain');
+      if (!input){ out.textContent = 'Suggerimento: scrivi ad es. "sotto 2700 a East Village 1+ letto no fee".'; return; }
+
+      const parsed = aiParse(input);
+      const { budget, beds, zip, nofee } = parsed;
+
+      const applied = [];
+      if (budget){ document.getElementById('maxRent').value = budget; applied.push(`budget: ${fmt.format(budget)}`); }
+      if (beds!==null){ document.getElementById('bedsMin').value = beds; applied.push(`letti min: ${beds==0?'Studio':beds+'+'}`); }
+      if (zip){ document.getElementById('zip').value = zip; applied.push(`ZIP: ${zip}`); }
+      document.getElementById('noFee').checked = !!nofee; if (nofee) applied.push('no-fee');
+
+      // sync UI segment letti
+      const seg = document.getElementById('bedsSeg');
+      [...seg.children].forEach(b=>b.classList.toggle('beds-active', b.dataset.beds === (beds??'')));
+
+      updateLabel(); renderZipPills(); buildProviderCards();
+
+      // Consigli smart
+      const s = aiSuggest({ budget, beds, zip });
+      const tips = s.picks.map(p=>`<code class="px-1.5 py-0.5 rounded bg-black/30 border border-muted">${p.zip}</code>`).join(' ');
+      const notes = s.notes.length ? `<div class="mt-1">${s.notes.join(' ')}</div>` : '';
+      out.innerHTML = `
+        <div class="text-xs text-muted">Capito: ${applied.join(' · ') || '—'}</div>
+        ${tips ? `<div class="mt-2 text-sm">Prova anche: ${tips}</div>` : ''}
+        ${notes}
+      `;
+
+      // opzionale: lancia strict subito se c'è un budget
+      if (budget) { loadStrict(); }
+    }
+
+    document.getElementById('aiGo').addEventListener('click', runAI);
+    document.getElementById('aiInput').addEventListener('keydown', (e)=>{ if (e.key==='Enter') runAI(); });
+
     // ===== Init =====
     (function initFromQuery(){
       const u = new URL(location.href);
@@ -511,7 +634,9 @@
       if (beds) document.getElementById('bedsMin').value = beds;
       if (zip) document.getElementById('zip').value = zip;
       if (nofee) document.getElementById('noFee').checked = true;
+
       updateLabel(); renderZipPills(); buildProviderCards(); renderSaved();
+
       // attiva correttamente il segmento letti
       const seg = document.getElementById('bedsSeg');
       [...seg.children].forEach(b=>b.classList.toggle('beds-active', b.dataset.beds === (beds||'')));
