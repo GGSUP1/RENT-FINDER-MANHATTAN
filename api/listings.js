@@ -1,13 +1,18 @@
 // api/listings.js
 const Parser = require("rss-parser");
 
-// User-Agent per evitare blocchi e timeout ragionevoli
+// IMPORTANTISSIMO: gli header vanno in requestOptions.headers
 const parser = new Parser({
-  headers: {
-    "User-Agent":
-      "Mozilla/5.0 (compatible; RentFinderBot/1.0; +https://ggsup1.github.io/RENT-FINDER-MANHATTAN/)"
-  },
-  timeout: 15000
+  timeout: 15000,
+  requestOptions: {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Referer": "https://newyork.craigslist.org/search/mnh/apa"
+    }
+  }
 });
 
 const ZIPS = new Set([
@@ -18,7 +23,7 @@ const ZIPS = new Set([
 ]);
 
 module.exports = async (req, res) => {
-  // CORS per chiamate dalla tua pagina su GitHub Pages
+  // CORS per chiamate dalla pagina su GitHub Pages
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   if (req.method === "OPTIONS") return res.status(200).end();
@@ -32,7 +37,27 @@ module.exports = async (req, res) => {
     if (beds) clUrl += `&min_bedrooms=${beds}`;
     if (zip)  clUrl += `&query=${encodeURIComponent(zip)}`;
 
-    const feed = await parser.parseURL(clUrl);
+    // Primo tentativo: lascia fare a rss-parser (con headers corretti)
+    let feed;
+    try {
+      feed = await parser.parseURL(clUrl);
+    } catch (e) {
+      // Fallback: scarico l'XML con fetch (con gli stessi header) e poi parseString
+      const resp = await fetch(clUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+          "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          "Referer": "https://newyork.craigslist.org/search/mnh/apa"
+        }
+      });
+      if (!resp.ok) {
+        throw new Error(`upstream_http_${resp.status}`);
+      }
+      const xml = await resp.text();
+      feed = await parser.parseString(xml);
+    }
 
     const listings = (feed.items || [])
       .map(it => {
