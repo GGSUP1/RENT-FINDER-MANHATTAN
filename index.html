@@ -52,6 +52,19 @@
 
     /* ZIP pills & beds segmented */
     .zip-btn-active{ background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+
+    /* Segmented compact 96x40 */
+    .seg{ display:flex; flex-wrap:wrap; gap:.5rem;}
+    .seg-btn{
+      width:96px; height:40px;
+      border:1px solid var(--border);
+      background: var(--surface); color: var(--fg);
+      border-radius:14px; font-weight:600; font-size:.9rem;
+      display:inline-flex; align-items:center; justify-content:center;
+      transition: background .15s, color .15s, border-color .15s, transform .06s;
+    }
+    .seg-btn:hover{ background: rgba(22,163,74,.08); border-color: var(--accent); }
+    .seg-btn:active{ transform: translateY(1px); }
     .seg-active{ background: var(--accent) !important; color:#fff !important; border-color: var(--accent) !important; }
 
     /* remove number spinners */
@@ -81,15 +94,15 @@
                  class="w-full border border-muted rounded-2xl p-3 bg-surface" />
         </div>
 
-        <!-- Letti min (segmentato) -->
+        <!-- Letti min (segmentato compatto) -->
         <div>
           <label class="block text-sm font-medium mb-1">Letti min</label>
-          <div id="bedsSeg" class="flex gap-2 flex-wrap">
-            <button data-beds=""  class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">Qualsiasi</button>
-            <button data-beds="0" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">Studio</button>
-            <button data-beds="1" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">1+</button>
-            <button data-beds="2" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">2+</button>
-            <button data-beds="3" class="px-3 py-2 rounded-xl border border-muted bg-surface text-sm">3+</button>
+          <div id="bedsSeg" class="seg">
+            <button type="button" data-beds=""  class="seg-btn" aria-pressed="true">Qualsiasi</button>
+            <button type="button" data-beds="0" class="seg-btn" aria-pressed="false">Studio</button>
+            <button type="button" data-beds="1" class="seg-btn" aria-pressed="false">1+</button>
+            <button type="button" data-beds="2" class="seg-btn" aria-pressed="false">2+</button>
+            <button type="button" data-beds="3" class="seg-btn" aria-pressed="false">3+</button>
           </div>
           <input id="bedsMin" type="hidden" value="">
         </div>
@@ -212,251 +225,4 @@
       MANHATTAN_ZIPS.forEach(z => {
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'px-3 py-1 rounded-full border border-gray-400 bg-gray-100 text-gray-800 text-sm font-medium hover:bg-green-500 hover:text-white hover:border-green-500 transition';
-        b.textContent = z;
-        if (current === z) b.classList.add('zip-btn-active');
-        b.addEventListener('click', () => {
-          const input = document.getElementById('zip');
-          if (input.value === z) input.value = '';
-          else input.value = z;
-          renderZipPills();
-        });
-        zipPills.appendChild(b);
-      });
-    }
-
-    // ===== Quartieri rapidi =====
-    (function renderHoods(){
-      const box = document.getElementById('hoodPills');
-      Object.entries(HOODS).forEach(([name, zip])=>{
-        const b = document.createElement('button');
-        b.type='button';
-        b.className='px-3 py-1 rounded-full border border-muted bg-surface text-sm hover:bg-green-500 hover:text-white transition';
-        b.textContent=name;
-        b.addEventListener('click', ()=>{
-          document.getElementById('zip').value = zip;
-          renderZipPills();
-          showToast(`${name} → ZIP ${zip}`);
-        });
-        box.appendChild(b);
-      });
-    })();
-
-    // ===== Beds segmented =====
-    (function initBedsSeg(){
-      const seg = document.getElementById('bedsSeg');
-      const hidden = document.getElementById('bedsMin');
-      const setActive = (val)=>{
-        hidden.value = val;
-        [...seg.children].forEach(b=>b.classList.remove('seg-active'));
-        const btn = [...seg.children].find(b=>b.dataset.beds===val);
-        if (btn) btn.classList.add('seg-active');
-      };
-      seg.addEventListener('click', (e)=>{
-        const b = e.target.closest('button[data-beds]');
-        if (!b) return;
-        setActive(b.dataset.beds);
-        buildProviderCards();
-      });
-      // stato iniziale da querystring
-      setActive(hidden.value || '');
-    })();
-
-    // ===== Provider links =====
-    function getProviderLinks({ maxRent, bedsMin, zip, noFee }){
-      const enc = encodeURIComponent;
-      const bedsParam = bedsMin ? bedsMin : '';
-      let se = `https://streeteasy.com/for-rent/manhattan?max_price=${maxRent}`;
-      if (bedsParam) se += `&beds=${bedsParam}`;
-      if (noFee) se += `&no_fee=true`;
-      if (zip) se += `&search=zip:${zip}`;
-      let zl = `https://www.zillow.com/manhattan-new-york-ny/rentals/?price=0-${maxRent}`;
-      if (bedsParam) zl += `&beds=${bedsParam}-_`;
-      if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
-      let rh = `https://www.renthop.com/apartments-for-rent/nyc/manhattan?max_price=${maxRent}`;
-      if (bedsParam) rh += `&min_beds=${bedsParam}`;
-      if (noFee) rh += `&has_fee=false`;
-      if (zip) rh += `&q=${zip}`;
-      let cl = `https://newyork.craigslist.org/search/mnh/apa?max_price=${maxRent}`;
-      if (bedsParam) cl += `&min_bedrooms=${bedsParam}`;
-      if (zip) cl += `&query=${enc(zip)}`;
-      let rl = `https://www.realtor.com/apartments/Manhattan_NY/price-na-${maxRent}`;
-      if (bedsParam) rl += `/beds-${bedsParam}`;
-      if (zip) rl = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
-      let hp = `https://hotpads.com/manhattan-new-york-ny/apartments-for-rent?price=-${maxRent}`;
-      if (bedsParam) hp += `&beds=${bedsParam}`;
-      if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
-      return [
-        { name: 'RentHop ✅', url: rh },
-        { name: 'Craigslist (Manhattan) ✅', url: cl },
-        { name: 'Realtor', url: rl },
-        { name: 'HotPads', url: hp },
-        { name: 'StreetEasy ⚠️', url: se },
-        { name: 'Zillow ⚠️', url: zl },
-      ];
-    }
-
-    function buildProviderCards(){
-      const { maxRent, bedsMin, zip, noFee } = readState();
-      const p = document.getElementById('providers');
-      p.innerHTML = '';
-      const providers = getProviderLinks({ maxRent, bedsMin, zip, noFee });
-      providers.forEach(pr => {
-        const a = document.createElement('a');
-        a.href = pr.url; a.target = '_blank'; a.rel = 'noopener';
-        a.className = 'card block border border-muted rounded-2xl bg-surface p-4';
-        a.innerHTML = `
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="font-semibold">${pr.name}</h3>
-            <span class="inline-flex items-center gap-1 text-sm text-muted">
-              apri ricerca
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="opacity-70">
-                <path d="M7 17L17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </span>
-          </div>
-          <p class="text-sm text-muted">
-            Filtri: Manhattan · max ${fmt.format(maxRent)}${zip?` · ZIP ${zip}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}
-          </p>`;
-        p.appendChild(a);
-      });
-
-      // share url
-      const params = new URLSearchParams();
-      params.set('max', String(maxRent));
-      if (bedsMin) params.set('beds', bedsMin);
-      if (zip) params.set('zip', zip);
-      if (noFee) params.set('nofee', '1');
-      history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
-    }
-
-    // ===== Strict (serverless) =====
-    const API_BASE = 'https://rent-finder-manhattan.vercel.app'; // <-- cambia se il tuo dominio è diverso
-    async function loadStrict(){
-      const { maxRent, bedsMin, zip } = readState();
-      const params = new URLSearchParams({ max: String(maxRent) });
-      if (bedsMin) params.set('beds', String(bedsMin));
-      if (zip) params.set('zip', zip);
-
-      const box = document.getElementById('strictBox');
-      box.innerHTML = '<div class="text-sm text-muted">Caricamento…</div>';
-      try {
-        const res = await fetch(`${API_BASE}/api/listings?${params.toString()}`);
-        const json = await res.json();
-        box.innerHTML = '';
-        if (!json.data || !json.data.length){
-          box.innerHTML = '<div class="text-sm text-muted">Nessun risultato ≤ $3.000 trovato con questi filtri.</div>';
-          return;
-        }
-        json.data.forEach(l => {
-          const a = document.createElement('a');
-          a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
-          a.className = 'card block border border-muted rounded-2xl bg-surface p-4';
-          a.innerHTML = `
-            <div class="flex items-center justify-between mb-1">
-              <div class="font-semibold truncate pr-2">${l.title || 'Listing'}</div>
-              <span class="text-sm">$${l.price || ''}</span>
-            </div>
-            <div class="text-sm text-muted">ZIP ${l.zipcode || '—'}</div>
-            <div class="text-xs text-muted mt-1">Fonte: Craigslist</div>
-          `;
-          box.appendChild(a);
-        });
-      } catch (e) {
-        box.innerHTML = '<div class="text-sm text-red-600">Errore nel caricamento.</div>';
-      }
-    }
-
-    // ===== Toast & util =====
-    function showToast(msg='Fatto!'){
-      const t=document.getElementById('toast');
-      t.textContent=msg;
-      t.classList.remove('opacity-0');
-      setTimeout(()=>t.classList.add('opacity-0'),1400);
-    }
-    document.getElementById('copy').addEventListener('click', async ()=>{
-      try{ await navigator.clipboard.writeText(location.href); showToast('Link copiato'); }
-      catch{ showToast('Impossibile copiare'); }
-    });
-
-    // ===== Salvataggi =====
-    function saveCurrent(){
-      const s = readState();
-      const saved = JSON.parse(localStorage.getItem('savedSearches')||'[]');
-      saved.unshift({ ...s, at: Date.now() });
-      localStorage.setItem('savedSearches', JSON.stringify(saved.slice(0, 12)));
-      renderSaved(); showToast('Ricerca salvata');
-    }
-    function renderSaved(){
-      const box = document.getElementById('saved');
-      box.innerHTML='';
-      const saved = JSON.parse(localStorage.getItem('savedSearches')||'[]');
-      if (!saved.length){ box.innerHTML = '<p class="text-sm text-muted">Nessuna ricerca salvata.</p>'; return; }
-      saved.forEach((s,idx)=>{
-        const d = new Date(s.at);
-        const card = document.createElement('div');
-        card.className = 'border border-muted rounded-2xl bg-surface p-3';
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium">${fmt.format(s.maxRent)}${s.zip?` · ${s.zip}`:''}${s.bedsMin?` · ${s.bedsMin}+bd`:''}${s.noFee?` · no-fee`:''}</div>
-              <div class="text-xs text-muted">${d.toLocaleString()}</div>
-            </div>
-            <div class="flex gap-2">
-              <button class="text-xs px-2 py-1 border border-muted rounded" data-act="load">Apri</button>
-              <button class="text-xs px-2 py-1 border border-muted rounded" data-act="del">Elimina</button>
-            </div>
-          </div>`;
-        card.addEventListener('click', (ev)=>{
-          const t = ev.target; if (!(t instanceof HTMLElement)) return;
-          if (t.dataset.act==='del'){
-            const arr = JSON.parse(localStorage.getItem('savedSearches')||'[]');
-            arr.splice(idx,1); localStorage.setItem('savedSearches', JSON.stringify(arr));
-            renderSaved();
-          }
-          if (t.dataset.act==='load'){
-            document.getElementById('maxRent').value = s.maxRent;
-            document.getElementById('bedsMin').value = s.bedsMin||'';
-            document.getElementById('zip').value = s.zip||'';
-            document.getElementById('noFee').checked = !!s.noFee;
-            updateLabel(); renderZipPills(); buildProviderCards(); showToast('Ricerca caricata');
-          }
-        });
-        box.appendChild(card);
-      });
-    }
-
-    // ===== Reset =====
-    document.getElementById('reset').addEventListener('click', ()=>{
-      document.getElementById('maxRent').value = 3000;
-      document.getElementById('bedsMin').value = '';
-      document.getElementById('zip').value = '';
-      document.getElementById('noFee').checked = false;
-      updateLabel(); renderZipPills(); buildProviderCards(); showToast('Filtri ripristinati');
-    });
-
-    // ===== Azioni =====
-    document.getElementById('build').addEventListener('click', buildProviderCards);
-    document.getElementById('save').addEventListener('click', saveCurrent);
-    document.getElementById('strict').addEventListener('click', loadStrict);
-    document.getElementById('maxRent').addEventListener('input', updateLabel);
-
-    // ===== Init =====
-    (function initFromQuery(){
-      const u = new URL(location.href);
-      const max = u.searchParams.get('max');
-      const beds = u.searchParams.get('beds');
-      const zip = u.searchParams.get('zip');
-      const nofee = u.searchParams.get('nofee');
-      if (max) document.getElementById('maxRent').value = max;
-      if (beds) document.getElementById('bedsMin').value = beds;
-      if (zip) document.getElementById('zip').value = zip;
-      if (nofee) document.getElementById('noFee').checked = true;
-      updateLabel(); renderZipPills(); buildProviderCards(); renderSaved();
-      // attiva bottone segmentato coerente con hidden
-      const seg = document.getElementById('bedsSeg');
-      [...seg.children].forEach(b=>b.classList.toggle('seg-active', b.dataset.beds === (beds||'')));
-    })();
-  </script>
-</body>
-</html>
+        b.className = 'px-3 py-1 rounded-full border border-gray-400 bg-surface text-gray-800 dark:text-white text-sm font-medium hover:bg-green-500
