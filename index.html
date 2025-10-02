@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Affitti a Manhattan ≤ $3.000</title>
-  <meta name="description" content="Trova rapidamente affitti a Manhattan entro 3000$ con link diretti ai principali portali." />
+  <title>KeyCap NYC — Affitti a Manhattan ≤ $3.000</title>
+  <meta name="description" content="KeyCap NYC: affitti a Manhattan entro $3.000 con link diretti ai principali portali (StreetEasy, Zillow, RentHop, Craigslist, Realtor). Filtri rapidi e risultati strict." />
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Inter font -->
@@ -64,7 +64,8 @@
   <main class="max-w-6xl mx-auto p-6">
     <!-- Header -->
     <header class="mb-4">
-      <h1 class="text-3xl md:text-4xl font-bold">Affitti a Manhattan ≤ <span id="maxRentLabel">$3,000</span></h1>
+      <h1 class="text-3xl md:text-4xl font-bold">KeyCap NYC</h1>
+      <p class="text-base font-medium mt-1">Affitti a Manhattan ≤ <span id="maxRentLabel">$3,000</span></p>
       <p class="text-sm text-muted mt-1 max-w-3xl">
         Pagina statica, nessuno scraping: genera <strong>link diretti</strong> con filtri precompilati su StreetEasy, Zillow, RentHop, Craigslist e Realtor.
         Alcuni portali potrebbero richiedere un clic aggiuntivo per applicare tutti i filtri.
@@ -434,13 +435,13 @@
       updateLabel(); renderZipPills(); buildProviderCards(); showToast('Filtri ripristinati');
     });
 
-    // ===== Listeners base =====
+    // ===== Azioni =====
     document.getElementById('build').addEventListener('click', buildProviderCards);
     document.getElementById('save').addEventListener('click', saveCurrent);
     document.getElementById('strict').addEventListener('click', loadStrict);
     document.getElementById('maxRent').addEventListener('input', updateLabel);
 
-    // ===== Init da querystring =====
+    // ===== Init =====
     (function initFromQuery(){
       const u = new URL(location.href);
       const max = u.searchParams.get('max');
@@ -448,7 +449,7 @@
       const zip = u.searchParams.get('zip');
       const nofee = u.searchParams.get('nofee');
       if (max) document.getElementById('maxRent').value = max;
-      if (beds) document.getElementById('bedsMin').value = beds; // hidden per segmentato
+      if (beds) document.getElementById('bedsMin').value = beds;
       if (zip) document.getElementById('zip').value = zip;
       if (nofee) document.getElementById('noFee').checked = true;
       updateLabel(); renderZipPills(); buildProviderCards(); renderSaved();
