@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KeyCap NYC — Affitti ≤ $3.000</title>
-  <meta name="description" content="KeyCap NYC: affitti a Manhattan, Brooklyn e Queens entro $3.000. Filtri rapidi, ZIP, Strict mode, Lease Takeover e Direct to Owner." />
+  <meta name="description" content="KeyCap NYC: affitti a Manhattan, Brooklyn e Queens entro $3.000. Filtri rapidi, quartieri, Strict mode, Lease Takeover e Direct to Owner." />
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Inter font -->
@@ -25,7 +25,14 @@
     .border-muted{ border-color: var(--border); }
     .card{ transition: transform .15s ease, box-shadow .15s ease; }
     .card:hover{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
-    .zip-active{ background: var(--accent) !important; color:#fff !important; border-color: var(--accent) !important; }
+    .chip{
+      padding: .45rem .7rem; border-radius: .75rem; border: 1px solid var(--border);
+      background: var(--surface); font-size: .85rem; font-weight: 700; color: var(--fg);
+      transition: background .15s, border-color .15s, color .15s, transform .05s;
+      white-space: nowrap;
+    }
+    .chip:hover{ background: rgba(22,163,74,.10); border-color: var(--accent); }
+    .chip-active{ background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
     .beds-btn{
       padding: .35rem .6rem; font-size: .85rem; border-radius: .6rem;
       border: 1px solid var(--border); background: var(--surface); color: var(--fg);
@@ -120,10 +127,13 @@
       </div>
     </section>
 
-    <!-- ZIP Pills -->
+    <!-- Quartieri -->
     <section class="mt-2 mb-2">
-      <h2 class="text-lg font-semibold mb-3">ZIP rapidi (<span id="zipAreaLabel">Manhattan</span>)</h2>
-      <div id="zipPills" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2 mt-1 text-sm"></div>
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-lg font-semibold">Quartieri rapidi (<span id="nabeAreaLabel">Manhattan</span>)</h2>
+        <button id="clearNabe" class="text-xs px-2 py-1 rounded border border-muted text-muted hover:text-white hover:border-white/30">Pulisci selezione</button>
+      </div>
+      <div id="nabePills" class="flex flex-wrap gap-2"></div>
     </section>
 
     <!-- Provider cards -->
@@ -144,32 +154,40 @@
   </main>
 
   <script>
-    // ===== ZIPS PER AREA =====
-    const ZIPS = {
+    // ===== Mapping quartieri -> ZIP di riferimento =====
+    const NABES = {
       manhattan: [
-        '10001','10002','10003','10004','10005','10006','10007','10009','10010','10011','10012','10013','10014',
-        '10016','10017','10018','10019','10021','10022','10023','10024','10025','10026','10027','10028','10029',
-        '10030','10031','10032','10033','10034','10035','10036','10037','10038','10039','10040','10044','10065','10069','10075','10280','10282'
+        { name:'SoHo', zip:'10012' }, { name:'NoHo', zip:'10012' }, { name:'Tribeca', zip:'10013' },
+        { name:'Financial District', zip:'10005' }, { name:'Battery Park City', zip:'10280' },
+        { name:'West Village', zip:'10014' }, { name:'Chelsea', zip:'10011' }, { name:'Flatiron', zip:'10010' },
+        { name:'Gramercy', zip:'10010' }, { name:'Kips Bay', zip:'10016' }, { name:'Murray Hill', zip:'10016' },
+        { name:'Midtown West', zip:'10019' }, { name:'Midtown East', zip:'10022' }, { name:'Hell’s Kitchen', zip:'10036' },
+        { name:'Upper West Side', zip:'10024' }, { name:'Upper East Side', zip:'10028' },
+        { name:'Harlem', zip:'10027' }, { name:'Washington Heights', zip:'10033' }, { name:'Inwood', zip:'10034' },
+        { name:'East Village', zip:'10009' }, { name:'Lower East Side', zip:'10002' }
       ],
-      harlem: [ '10026','10027','10030','10031','10032','10037','10039' ],
-      upper_manhattan: [ '10026','10027','10028','10029','10030','10031','10032','10033','10034','10035','10036','10037','10039','10040' ],
+      harlem: [
+        { name:'Central Harlem', zip:'10027' }, { name:'East Harlem', zip:'10029' }, { name:'Hamilton Heights', zip:'10031' }
+      ],
+      upper_manhattan: [
+        { name:'Washington Heights', zip:'10033' }, { name:'Inwood', zip:'10034' }, { name:'Marble Hill', zip:'10463' }
+      ],
       brooklyn: [
-        '11201','11203','11204','11205','11206','11207','11208','11209','11210','11211','11212','11213','11214','11215','11216','11217',
-        '11218','11219','11220','11221','11222','11223','11224','11225','11226','11228','11229','11230','11231','11232','11233','11234',
-        '11235','11236','11237','11238','11239'
+        { name:'Williamsburg', zip:'11211' }, { name:'Greenpoint', zip:'11222' }, { name:'Bushwick', zip:'11237' },
+        { name:'Bed-Stuy', zip:'11216' }, { name:'Fort Greene', zip:'11205' }, { name:'Brooklyn Heights', zip:'11201' },
+        { name:'DUMBO', zip:'11201' }, { name:'Cobble Hill', zip:'11231' }, { name:'Carroll Gardens', zip:'11231' },
+        { name:'Park Slope', zip:'11215' }, { name:'Crown Heights', zip:'11213' }, { name:'Prospect Heights', zip:'11238' },
+        { name:'Bay Ridge', zip:'11209' }
       ],
       queens: [
-        '11101','11102','11103','11104','11105','11106',
-        '11354','11355','11356','11357','11358','11360','11361','11362','11363','11364','11365','11366','11367',
-        '11368','11369','11370','11372','11373','11374','11375','11377','11378','11379','11385',
-        '11411','11412','11413','11414','11415','11416','11417','11418','11419','11420','11421','11422','11423','11426','11427','11428','11429','11432','11433','11434','11435','11436',
-        '11691','11692','11693','11694','11697'
+        { name:'Astoria', zip:'11102' }, { name:'Long Island City', zip:'11101' }, { name:'Sunnyside', zip:'11104' },
+        { name:'Jackson Heights', zip:'11372' }, { name:'Woodside', zip:'11377' }, { name:'Forest Hills', zip:'11375' },
+        { name:'Flushing', zip:'11354' }, { name:'Ridgewood', zip:'11385' }
       ]
     };
 
     // ===== Helpers =====
     function buildQueryTerms(leaseTakeover, directOwner){
-      // Query "ricche" per SE/Zillow
       const takeover = leaseTakeover
         ? '(lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval)'
         : '';
@@ -181,7 +199,6 @@
         : '';
       return [takeover, directPos, directNeg].filter(Boolean).join(' ');
     }
-    // Query SEMPLICI per Craigslist (evita 404)
     function buildSimpleTerms(leaseTakeover, directOwner){
       const t = [];
       if (leaseTakeover) t.push('lease takeover','assignment','assume lease','lease break','landlord approval');
@@ -196,14 +213,12 @@
       const clArea = clAreaMap[area] || 'mnh';
       const hpAreaMap = { manhattan: 'manhattan-new-york-ny', brooklyn: 'brooklyn-ny', queens: 'queens-ny' };
       const hpArea = hpAreaMap[area] || hpAreaMap['manhattan'];
-      // slug città per Apartments
       const cityMap = { manhattan: 'manhattan-ny', brooklyn: 'brooklyn-ny', queens: 'queens-ny' };
       const cityGeneric = 'new-york-ny';
       const citySlug = cityMap[area] || cityGeneric;
-      // area per Realtor
       const rlAreaMap = { manhattan: 'Manhattan_NY', harlem: 'Manhattan_NY', upper_manhattan: 'Manhattan_NY', brooklyn: 'Brooklyn_NY', queens: 'Queens_NY' };
       const rlArea = rlAreaMap[area] || 'Manhattan_NY';
-      return { seArea, zlArea, clArea, hpArea, citySlug, cityGeneric, rlArea };
+      return { seArea, zlArea, clArea, hpArea, citySlug, rlArea };
     }
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
@@ -223,7 +238,7 @@
       document.getElementById('maxRentLabel').textContent = fmt.format(maxRent);
       const areaName = area === 'upper_manhattan' ? 'Upper Manhattan' : (area.charAt(0).toUpperCase()+area.slice(1)).replace('_',' ');
       document.getElementById('areaLabel').textContent = areaName;
-      document.getElementById('zipAreaLabel').textContent = areaName;
+      document.getElementById('nabeAreaLabel').textContent = areaName;
     }
 
     // ===== Beds segmented =====
@@ -247,22 +262,22 @@
       setActive(hidden.value || '');
     })();
 
-    // ===== ZIP pills =====
-    function renderZipPills(){
-      const box = document.getElementById('zipPills');
+    // ===== Quartieri pills =====
+    function renderNabePills(){
+      const box = document.getElementById('nabePills');
       const { area } = readState();
-      const current = document.getElementById('zip').value;
+      const currentZip = document.getElementById('zip').value;
       box.innerHTML = '';
-      (ZIPS[area] || []).forEach(z=>{
+      (NABES[area] || []).forEach(({name, zip})=>{
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.textContent = z;
-        btn.className = 'px-3 py-1 rounded-full border border-muted bg-surface text-sm hover:bg-[rgba(22,163,74,.12)]';
-        if (current === z) btn.classList.add('zip-active');
+        btn.textContent = name;
+        btn.className = 'chip';
+        if (currentZip === zip) btn.classList.add('chip-active');
         btn.onclick = () => {
           const input = document.getElementById('zip');
-          input.value = (input.value === z) ? '' : z;
-          renderZipPills();
+          input.value = (input.value === zip) ? '' : zip; // toggle
+          renderNabePills();
           buildProviderCards();
         };
         box.appendChild(btn);
@@ -295,7 +310,7 @@
       if (bedsParam) hp += `&beds=${bedsParam}`;
       if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
 
-      // Apartments.com (parametro corretto: max-price)
+      // Apartments.com
       let ap;
       if (zip) {
         ap = `https://www.apartments.com/apartments/${zip}/?max-price=${maxRent}`;
@@ -304,7 +319,7 @@
       }
       if (bedsParam) ap += `&beds=${bedsParam}`;
 
-      // Realtor.com (usa area o ZIP; formato max-only: price-na-<max>)
+      // Realtor.com
       let re = `https://www.realtor.com/apartments/${rlArea}/price-na-${maxRent}`;
       if (bedsParam) re += `/beds-${bedsParam}`;
       if (zip) re = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
@@ -349,7 +364,7 @@
             </span>
           </div>
           <p class="text-sm text-muted">
-            Filtri: ${areaLabelText()} · max ${fmt.format(maxRent)}${zip?` · ZIP ${zip}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}${leaseTakeover?` · lease takeover`:''}${directOwner?` · direct owner`:''}
+            Filtri: ${areaLabelText()} · max ${fmt.format(maxRent)}${zip?` · ${zipToNabe(zip) || ('ZIP '+zip)}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}${leaseTakeover?` · lease takeover`:''}${directOwner?` · direct owner`:''}
           </p>`;
         p.appendChild(a);
       });
@@ -371,8 +386,15 @@
       return val === 'upper_manhattan' ? 'Upper Manhattan' : (val.charAt(0).toUpperCase()+val.slice(1)).replace('_',' ');
     }
 
+    function zipToNabe(zip){
+      for (const area in NABES){
+        const hit = NABES[area].find(n=>n.zip===zip);
+        if (hit) return hit.name;
+      }
+      return null;
+    }
+
     // ===== Strict (serverless) =====
-    // ⚠️ Cambia se il tuo dominio Vercel è diverso
     const API_BASE = 'https://rent-finder-manhattan.vercel.app';
 
     async function loadStrict(){
@@ -390,7 +412,7 @@
       if (bedsMin) params.set('beds', String(bedsMin));
       if (zip) params.set('zip', zip);
 
-      const qTerms = buildQueryTerms(leaseTakeover, directOwner); // lato API filtriamo
+      const qTerms = buildQueryTerms(leaseTakeover, directOwner);
       if (qTerms) params.set('q', qTerms);
 
       box.innerHTML = '<div class="text-sm text-muted">Caricamento…</div>';
@@ -432,15 +454,20 @@
       document.getElementById('noFee').checked = false;
       document.getElementById('leaseTakeover').checked = false;
       document.getElementById('directOwner').checked = false;
-      updateLabels(); renderZipPills(); buildProviderCards();
+      updateLabels(); renderNabePills(); buildProviderCards();
     });
     document.getElementById('area').addEventListener('change', ()=>{
+      // Cambio area → tolgo lo ZIP e rendo i quartieri relativi
       document.getElementById('zip').value = '';
-      updateLabels(); renderZipPills(); buildProviderCards();
+      updateLabels(); renderNabePills(); buildProviderCards();
     });
     document.getElementById('maxRent').addEventListener('input', updateLabels);
     document.getElementById('leaseTakeover').addEventListener('change', buildProviderCards);
     document.getElementById('directOwner').addEventListener('change', buildProviderCards);
+    document.getElementById('clearNabe').addEventListener('click', ()=>{
+      document.getElementById('zip').value = '';
+      renderNabePills(); buildProviderCards();
+    });
 
     // ===== Init from query =====
     (function initFromQuery(){
@@ -461,7 +488,7 @@
       if (lt) document.getElementById('leaseTakeover').checked = true;
       if (dO) document.getElementById('directOwner').checked = true;
 
-      updateLabels(); renderZipPills(); buildProviderCards();
+      updateLabels(); renderNabePills(); buildProviderCards();
 
       // sync pulsanti letti
       const seg = document.getElementById('bedsSeg');
