@@ -6,7 +6,6 @@
   <title>KeyCap NYC — Lease Hunter ≤ $3.000</title>
   <meta name="description" content="KeyCap NYC: radar per affitti ≤ $3.000 a Manhattan, Brooklyn e Queens. Quartieri, Strict, Lease Takeover, Direct to Owner, Corporate/Assignable e salvataggio opportunità." />
   <script src="https://cdn.tailwindcss.com"></script>
-
   <!-- Inter font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,151 +14,160 @@
   <style>
     html,body{ font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; }
     :root{
-      --bg: #0b0c10; --fg: #f7f8fa; --surface: #11151c; --muted: #9aa3ae;
-      --border: rgba(255,255,255,.10); --accent: #16a34a; --accent-700: #15803d;
-      --warn-bg: rgba(234,179,8,.12); --warn-br: rgba(234,179,8,.35); --warn-fg: #eab308;
+      --bg:#0b0c10; --fg:#f7f8fa; --surface:#11151c; --muted:#9aa3ae;
+      --border:rgba(255,255,255,.10); --accent:#16a34a; --accent-700:#15803d;
+      --warn-bg:rgba(234,179,8,.12); --warn-br:rgba(234,179,8,.35); --warn-fg:#eab308;
     }
-    body{ background: var(--bg); color: var(--fg); }
-    .bg-surface{ background: var(--surface); }
-    .text-muted{ color: var(--muted); }
-    .border-muted{ border-color: var(--border); }
-    .card{ transition: transform .15s ease, box-shadow .15s ease; }
-    .card:hover{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.14); }
+    body{ background:var(--bg); color:var(--fg); }
+    .bg-surface{ background:var(--surface); }
+    .text-muted{ color:var(--muted); }
+    .border-muted{ border-color:var(--border); }
+
+    /* Buttons */
+    .btn{ height:40px; padding:0 .9rem; border-radius:.8rem; font-weight:700; font-size:.9rem; display:inline-flex; align-items:center; gap:.45rem; }
+    .btn-ghost{ border:1px solid var(--border); background:var(--surface); color:var(--fg); }
+    .btn-ghost:hover{ border-color:#ffffff33; }
+    .btn-primary{ background:var(--accent); color:#fff; }
+    .btn-primary:hover{ background:var(--accent-700); }
+    .btn-outline{ border:1px solid var(--border); background:rgba(255,255,255,.9); color:#0b0c10; }
+    .btn-outline:hover{ border-color:#cbd5e1; }
+
+    /* Inputs */
+    .input, .select{
+      height:40px; border-radius:.8rem; border:1px solid var(--border); background:var(--surface);
+      padding:.35rem .8rem; color:var(--fg);
+    }
+    .input::placeholder{ color:#94a3b8; }
+
+    /* Segmented buttons (beds) */
+    .seg-btn{
+      height:36px; padding:0 .7rem; border-radius:.6rem; border:1px solid var(--border);
+      background:var(--surface); color:var(--fg); font-weight:700; font-size:.85rem;
+    }
+    .seg-btn:hover{ background:rgba(22,163,74,.10); border-color:var(--accent); }
+    .seg-active{ background:var(--accent) !important; color:#fff !important; border-color:var(--accent) !important; }
+
+    /* Chips (quartieri) */
     .chip{
-      padding: .45rem .7rem; border-radius: .75rem; border: 1px solid var(--border);
-      background: var(--surface); font-size: .85rem; font-weight: 700; color: var(--fg);
-      transition: background .15s, border-color .15s, color .15s, transform .05s;
-      white-space: nowrap;
+      height:34px; padding:0 .7rem; border-radius:.7rem; border:1px solid var(--border);
+      background:var(--surface); font-size:.85rem; font-weight:700; color:var(--fg);
     }
-    .chip:hover{ background: rgba(22,163,74,.10); border-color: var(--accent); }
-    .chip-active{ background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
-    .beds-btn{
-      padding: .35rem .6rem; font-size: .85rem; border-radius: .6rem;
-      border: 1px solid var(--border); background: var(--surface); color: var(--fg);
-      font-weight: 700; transition: background .15s, color .15s, border-color .15s;
-    }
-    .beds-btn:hover{ background: rgba(22,163,74,.10); border-color: var(--accent); }
-    .beds-active{ background: var(--accent) !important; color:#fff !important; border-color: var(--accent) !important; }
+    .chip:hover{ background:rgba(22,163,74,.10); border-color:var(--accent); }
+    .chip-active{ background:var(--accent) !important; border-color:var(--accent) !important; color:#fff !important; }
+
+    /* Cards */
+    .card{ border:1px solid var(--border); border-radius:1rem; background:var(--surface); padding:1rem; transition:transform .15s ease, box-shadow .15s ease; }
+    .card:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,.14); }
+    .badge{ font-size:.65rem; padding:.15rem .4rem; border-radius:.4rem; border:1px solid var(--border); color:var(--muted); }
+
     input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
-    input[type="checkbox"]{ accent-color: var(--accent); }
-    .badge{ font-size:.65rem; padding:.15rem .4rem; border-radius:.4rem; border:1px solid var(--border); color:var(--muted);}
+    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    input[type="checkbox"]{ accent-color:var(--accent); width:18px; height:18px; }
   </style>
 </head>
 <body>
   <main class="max-w-6xl mx-auto p-6">
+
     <!-- Header -->
     <header class="flex items-center gap-3 py-4 border-b border-muted mb-6">
       <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" class="rounded-xl">
         <rect width="44" height="44" rx="10" fill="#16a34a"/>
-        <text x="50%" y="50%" text-anchor="middle" dy=".35em"
-              font-size="22" font-family="Inter, sans-serif" font-weight="700" fill="white">K</text>
+        <text x="50%" y="50%" text-anchor="middle" dy=".35em" font-size="22" font-family="Inter, sans-serif" font-weight="700" fill="white">K</text>
       </svg>
       <div class="min-w-0">
-        <h1 class="text-3xl md:text-4xl font-black tracking-tight leading-none">
-          KeyCap <span class="text-[#16a34a]">NYC</span>
-        </h1>
-        <p class="text-sm text-muted mt-1">
-          Lease Hunter in <span id="areaLabel">Manhattan</span> ≤ <span id="maxRentLabel">$3,000</span>
-        </p>
+        <h1 class="text-3xl md:text-4xl font-black tracking-tight leading-none">KeyCap <span class="text-[#16a34a]">NYC</span></h1>
+        <p class="text-sm text-muted mt-1">Lease Hunter in <span id="areaLabel">Manhattan</span> ≤ <span id="maxRentLabel">$3,000</span></p>
       </div>
     </header>
 
-    <!-- Avviso -->
+    <!-- Info -->
     <section class="mt-1 mb-5">
       <div class="rounded-xl px-4 py-3 text-sm border border-[var(--warn-br)] bg-[var(--warn-bg)] text-[var(--warn-fg)]">
         ⚠️ Alcuni portali mostrano sponsorizzati o “net effective” sopra soglia. <strong>Strict</strong> ti mostra solo risultati ≤ $3.000 (Craigslist).
       </div>
     </section>
 
-    <!-- Controlli -->
-    <section class="grid md:grid-cols-5 gap-3 items-end mb-6">
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="area">Area</label>
-        <select id="area" class="w-full border border-muted rounded-2xl p-3 bg-surface">
-          <option value="manhattan" selected>Manhattan</option>
-          <option value="harlem">Harlem</option>
-          <option value="upper_manhattan">Upper Manhattan</option>
-          <option value="brooklyn">Brooklyn</option>
-          <option value="queens">Queens</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="maxRent">Budget ($)</label>
-        <input id="maxRent" type="number" value="3000" min="800" step="50"
-               class="w-full border border-muted rounded-2xl p-3 bg-surface" />
-      </div>
-
-      <div>
-        <label class="block text-sm font-semibold mb-1">Letti min</label>
-        <div id="bedsSeg" class="flex flex-wrap gap-2">
-          <button type="button" data-beds=""  class="beds-btn beds-active">Qualsiasi</button>
-          <button type="button" data-beds="0" class="beds-btn">Studio</button>
-          <button type="button" data-beds="1" class="beds-btn">1+</button>
-          <button type="button" data-beds="2" class="beds-btn">2+</button>
-          <button type="button" data-beds="3" class="beds-btn">3+</button>
+    <!-- Toolbar compatta -->
+    <section class="space-y-3 mb-6">
+      <!-- Filtri principali -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1" for="area">Area</label>
+          <select id="area" class="select w-full">
+            <option value="manhattan" selected>Manhattan</option>
+            <option value="harlem">Harlem</option>
+            <option value="upper_manhattan">Upper Manhattan</option>
+            <option value="brooklyn">Brooklyn</option>
+            <option value="queens">Queens</option>
+          </select>
         </div>
-        <input id="bedsMin" type="hidden" value="">
+
+        <div>
+          <label class="block text-xs font-semibold mb-1" for="maxRent">Budget ($)</label>
+          <input id="maxRent" type="number" value="3000" min="800" step="50" class="input w-full" />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold mb-1">Letti min</label>
+          <div id="bedsSeg" class="flex flex-wrap gap-2">
+            <button type="button" data-beds=""  class="seg-btn seg-active">Qualsiasi</button>
+            <button type="button" data-beds="0" class="seg-btn">Studio</button>
+            <button type="button" data-beds="1" class="seg-btn">1+</button>
+            <button type="button" data-beds="2" class="seg-btn">2+</button>
+            <button type="button" data-beds="3" class="seg-btn">3+</button>
+          </div>
+          <input id="bedsMin" type="hidden" value="">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1" for="zip">ZIP (opz.)</label>
+          <input id="zip" placeholder="es. 10009 / 11211" class="input w-full" />
+        </div>
       </div>
 
-      <div>
-        <label class="block text-sm font-semibold mb-1" for="zip">ZIP (opz.)</label>
-        <input id="zip" placeholder="es. 10009 o 11211" class="w-full border border-muted rounded-2xl p-3 bg-surface" />
-      </div>
-
-      <div class="flex flex-wrap gap-2 justify-end items-center">
-        <button id="build" class="px-4 py-2 rounded-xl border border-muted bg-white/90 text-black text-sm">Genera link</button>
-        <button id="strict" class="px-4 py-2 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-700)] text-white text-sm">Strict ≤$3k</button>
-        <button id="reset" class="px-4 py-2 rounded-xl border border-muted bg-surface text-sm">Reset</button>
-        <label class="flex items-center gap-2 text-sm font-semibold">
-          <input id="noFee" type="checkbox" class="w-5 h-5" />
-          No-fee
-        </label>
-        <label class="flex items-center gap-2 text-sm font-semibold" title="Subentro: assignment/takeover/break">
-          <input id="leaseTakeover" type="checkbox" class="w-5 h-5" />
-          Lease takeover
-        </label>
-        <label class="flex items-center gap-2 text-sm font-semibold" title="Annunci diretti (esclude sublet/room/short-term)">
-          <input id="directOwner" type="checkbox" class="w-5 h-5" />
-          Direct to owner
-        </label>
-        <label class="flex items-center gap-2 text-sm font-semibold" title="Lease aziendali o assegnabili">
-          <input id="corpAssignable" type="checkbox" class="w-5 h-5" />
-          Corporate / Assignable
-        </label>
+      <!-- Azioni e toggle -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="flex flex-wrap gap-2">
+          <button id="build" class="btn btn-outline">Genera link</button>
+          <button id="strict" class="btn btn-primary">Strict ≤$3k</button>
+          <button id="reset" class="btn btn-ghost">Reset</button>
+        </div>
+        <div class="flex flex-wrap md:justify-end gap-4 items-center">
+          <label class="flex items-center gap-2 text-sm font-semibold"><input id="noFee" type="checkbox" /> No-fee</label>
+          <label class="flex items-center gap-2 text-sm font-semibold" title="Subentro: assignment/takeover/break"><input id="leaseTakeover" type="checkbox" /> Lease takeover</label>
+          <label class="flex items-center gap-2 text-sm font-semibold" title="Annunci diretti (no sublet/room/short-term)"><input id="directOwner" type="checkbox" /> Direct owner</label>
+          <label class="flex items-center gap-2 text-sm font-semibold" title="Lease aziendali o assegnabili"><input id="corpAssignable" type="checkbox" /> Corporate/Assignable</label>
+        </div>
       </div>
     </section>
 
     <!-- Quartieri -->
-    <section class="mt-2 mb-2">
+    <section class="mt-2 mb-4">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-lg font-semibold">Quartieri rapidi (<span id="nabeAreaLabel">Manhattan</span>)</h2>
-        <button id="clearNabe" class="text-xs px-2 py-1 rounded border border-muted text-muted hover:text-white hover:border-white/30">Pulisci selezione</button>
+        <h2 class="text-base font-semibold">Quartieri rapidi (<span id="nabeAreaLabel">Manhattan</span>)</h2>
+        <button id="clearNabe" class="btn btn-ghost h-8">Pulisci</button>
       </div>
       <div id="nabePills" class="flex flex-wrap gap-2"></div>
     </section>
 
-    <!-- Provider cards -->
+    <!-- Providers -->
     <section class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="providers"></section>
 
     <!-- Strict -->
     <section class="mt-8">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold mb-2">Strict (Craigslist) ≤ $3.000</h2>
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-base font-semibold">Strict (Craigslist) ≤ $3.000</h2>
         <span class="badge">solo ≤$3k</span>
       </div>
       <div id="strictBox" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-      <p class="text-xs text-muted mt-2" id="strictNote">
-        Strict attivo per Manhattan, Brooklyn e Queens (Harlem/Upper Manhattan = Manhattan).
-      </p>
+      <p class="text-xs text-muted mt-2">Strict attivo per Manhattan, Brooklyn e Queens (Harlem/Upper Manhattan = Manhattan).</p>
     </section>
 
     <!-- Opportunità salvate -->
     <section class="mt-10">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold">Opportunità salvate</h2>
-        <button id="clearSaved" class="text-xs px-2 py-1 rounded border border-muted text-muted hover:text-white hover:border-white/30">Svuota</button>
+        <h2 class="text-base font-semibold">Opportunità salvate</h2>
+        <button id="clearSaved" class="btn btn-ghost h-8">Svuota</button>
       </div>
       <div id="savedBox" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2"></div>
       <p id="savedEmpty" class="text-sm text-muted mt-2">Nessuna opportunità salvata.</p>
@@ -171,7 +179,7 @@
   </main>
 
   <script>
-    // ===== Quartieri -> ZIP =====
+    /* ====== Quartieri -> ZIP ====== */
     const NABES = {
       manhattan: [
         { name:'SoHo', zip:'10012' }, { name:'NoHo', zip:'10012' }, { name:'Tribeca', zip:'10013' },
@@ -203,42 +211,41 @@
       ]
     };
 
-    // ===== Helpers: query terms =====
-    function buildQueryTerms(leaseTakeover, directOwner, corpAssignable){
+    /* ====== Helpers: query terms ====== */
+    function buildQueryTerms(lt, dO, ca){
       const t = [];
-      if (leaseTakeover) t.push('(lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval)');
-      if (directOwner)   t.push('(direct to owner OR owner managed OR management OR leasing office OR no broker OR apply through management OR sponsor unit)', '(-sublet -room -roommate -short-term -temporary -share)');
-      if (corpAssignable) t.push('(corporate lease OR assignable lease OR sublet allowed OR subletting allowed OR assignment permitted OR corporate housing)');
+      if (lt) t.push('(lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval)');
+      if (dO) t.push('(direct to owner OR owner managed OR management OR leasing office OR no broker OR apply through management OR sponsor unit)','(-sublet -room -roommate -short-term -temporary -share)');
+      if (ca) t.push('(corporate lease OR assignable lease OR sublet allowed OR subletting allowed OR assignment permitted OR corporate housing)');
       return t.join(' ');
     }
-    function buildSimpleTerms(leaseTakeover, directOwner, corpAssignable){
-      // versione “senza parentesi” per Craigslist (evita 404)
+    function buildSimpleTerms(lt, dO, ca){
       const t = [];
-      if (leaseTakeover)  t.push('lease takeover','assignment','assume lease','lease break','landlord approval');
-      if (directOwner)    t.push('direct to owner','owner managed','management','leasing office','no broker','sponsor unit');
-      if (corpAssignable) t.push('corporate lease','assignable lease','sublet allowed','assignment permitted','corporate housing');
+      if (lt) t.push('lease takeover','assignment','assume lease','lease break','landlord approval');
+      if (dO) t.push('direct to owner','owner managed','management','leasing office','no broker','sponsor unit');
+      if (ca) t.push('corporate lease','assignable lease','sublet allowed','assignment permitted','corporate housing');
       return t.join(' ');
     }
 
-    // ===== Slugs area =====
+    /* ====== Slugs area ====== */
     function getAreaSlugs(area){
       const seArea = (area==='brooklyn'||area==='queens') ? area : 'manhattan';
-      const zlAreaMap = { manhattan: 'manhattan-new-york-ny', brooklyn: 'brooklyn-new-york-ny', queens: 'queens-new-york-ny' };
+      const zlAreaMap = { manhattan:'manhattan-new-york-ny', brooklyn:'brooklyn-new-york-ny', queens:'queens-new-york-ny' };
       const zlArea = zlAreaMap[area] || zlAreaMap['manhattan'];
-      const clAreaMap = { manhattan: 'mnh', harlem: 'mnh', upper_manhattan: 'mnh', brooklyn: 'brk', queens: 'que' };
+      const clAreaMap = { manhattan:'mnh', harlem:'mnh', upper_manhattan:'mnh', brooklyn:'brk', queens:'que' };
       const clArea = clAreaMap[area] || 'mnh';
-      const hpAreaMap = { manhattan: 'manhattan-new-york-ny', brooklyn: 'brooklyn-ny', queens: 'queens-ny' };
+      const hpAreaMap = { manhattan:'manhattan-new-york-ny', brooklyn:'brooklyn-ny', queens:'queens-ny' };
       const hpArea = hpAreaMap[area] || hpAreaMap['manhattan'];
-      const cityMap = { manhattan: 'manhattan-ny', brooklyn: 'brooklyn-ny', queens: 'queens-ny' };
-      const cityGeneric = 'new-york-ny';
-      const citySlug = cityMap[area] || cityGeneric;
-      const rlAreaMap = { manhattan: 'Manhattan_NY', harlem: 'Manhattan_NY', upper_manhattan: 'Manhattan_NY', brooklyn: 'Brooklyn_NY', queens: 'Queens_NY' };
+      const cityMap = { manhattan:'manhattan-ny', brooklyn:'brooklyn-ny', queens:'queens-ny' };
+      const citySlug = cityMap[area] || 'new-york-ny';
+      const rlAreaMap = { manhattan:'Manhattan_NY', harlem:'Manhattan_NY', upper_manhattan:'Manhattan_NY', brooklyn:'Brooklyn_NY', queens:'Queens_NY' };
       const rlArea = rlAreaMap[area] || 'Manhattan_NY';
       return { seArea, zlArea, clArea, hpArea, citySlug, rlArea };
     }
-    const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-    // ===== Stato & UI =====
+    const fmt = new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 });
+
+    /* ====== Stato & UI ====== */
     function readState(){
       const area = document.getElementById('area').value;
       const maxRent = Math.max(0, parseInt(document.getElementById('maxRent').value || '3000', 10));
@@ -264,14 +271,14 @@
       const hidden = document.getElementById('bedsMin');
       const setActive = (val)=>{
         hidden.value = val;
-        [...seg.querySelectorAll('.beds-btn')].forEach(b=>{
+        [...seg.querySelectorAll('.seg-btn')].forEach(b=>{
           const on = (b.dataset.beds === val);
-          b.classList.toggle('beds-active', on);
+          b.classList.toggle('seg-active', on);
           b.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
       };
       seg.addEventListener('click', (e)=>{
-        const b = e.target.closest('.beds-btn[data-beds]');
+        const b = e.target.closest('.seg-btn[data-beds]');
         if (!b) return;
         setActive(b.dataset.beds);
         buildProviderCards();
@@ -301,7 +308,7 @@
       });
     }
 
-    // Provider URLs (6 sorgenti)
+    /* ====== Provider URLs (6) ====== */
     function getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner, corpAssignable }){
       const enc = encodeURIComponent;
       const bedsParam = bedsMin ? bedsMin : '';
@@ -328,12 +335,9 @@
       if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
 
       // Apartments.com
-      let ap;
-      if (zip) {
-        ap = `https://www.apartments.com/apartments/${zip}/?max-price=${maxRent}`;
-      } else {
-        ap = `https://www.apartments.com/${citySlug}/?max-price=${maxRent}`;
-      }
+      let ap = zip
+        ? `https://www.apartments.com/apartments/${zip}/?max-price=${maxRent}`
+        : `https://www.apartments.com/${citySlug}/?max-price=${maxRent}`;
       if (bedsParam) ap += `&beds=${bedsParam}`;
 
       // Realtor.com
@@ -351,12 +355,12 @@
       const cl = `https://newyork.craigslist.org/search/${clArea}/apa?${clParams.toString()}`;
 
       return [
-        { name: 'HotPads',        url: hp },
-        { name: area==='manhattan' ? 'Craigslist (Manhattan)' : area==='brooklyn' ? 'Craigslist (Brooklyn)' : 'Craigslist (Queens)', url: cl },
-        { name: 'StreetEasy',     url: se },
-        { name: 'Zillow',         url: zl },
-        { name: 'Apartments.com', url: ap },
-        { name: 'Realtor.com',    url: re },
+        { name:'HotPads', url:hp },
+        { name: area==='manhattan' ? 'Craigslist (Manhattan)' : area==='brooklyn' ? 'Craigslist (Brooklyn)' : 'Craigslist (Queens)', url:cl },
+        { name:'StreetEasy', url:se },
+        { name:'Zillow', url:zl },
+        { name:'Apartments.com', url:ap },
+        { name:'Realtor.com', url:re },
       ];
     }
 
@@ -369,19 +373,18 @@
       providers.forEach(pr => {
         const a = document.createElement('a');
         a.href = pr.url; a.target = '_blank'; a.rel = 'noopener';
-        a.className = 'card block border border-muted rounded-2xl bg-surface p-4';
+        a.className = 'card';
         a.innerHTML = `
           <div class="flex items-center justify-between mb-2">
-            <h3 class="font-semibold">${pr.name}</h3>
-            <span class="inline-flex items-center gap-1 text-sm text-muted">
-              apri
+            <h3 class="font-semibold truncate pr-2">${pr.name}</h3>
+            <span class="inline-flex items-center gap-1 text-sm text-muted">apri
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="opacity-70">
                 <path d="M7 17L17 7M17 7H9M17 7v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </span>
           </div>
           <p class="text-sm text-muted">
-            Filtri: ${areaLabelText()} · max ${fmt.format(maxRent)}${zip?` · ${zipToNabe(zip) || ('ZIP '+zip)}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}${leaseTakeover?` · lease takeover`:''}${directOwner?` · direct owner`:''}${corpAssignable?` · corporate/assignable`:''}
+            ${areaLabelText()} · max ${fmt.format(maxRent)}${zip?` · ${zipToNabe(zip) || ('ZIP '+zip)}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}${leaseTakeover?` · lease takeover`:''}${directOwner?` · direct owner`:''}${corpAssignable?` · corporate/assignable`:''}
           </p>`;
         p.appendChild(a);
       });
@@ -411,10 +414,8 @@
       return null;
     }
 
-    // ===== Strict (serverless)
+    /* ====== Strict (serverless) ====== */
     const API_BASE = 'https://rent-finder-manhattan.vercel.app';
-
-    // Regex contatti (title-based, no scraping)
     const mailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig;
     const phoneRe = /(?:(?:\+1[\s-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/g;
 
@@ -427,18 +428,13 @@
     async function loadStrict(){
       const { area, maxRent, bedsMin, zip, leaseTakeover, directOwner, corpAssignable } = readState();
       const box = document.getElementById('strictBox');
+      const allowed = ['manhattan','brooklyn','queens','harlem','upper_manhattan'];
+      if (!allowed.includes(area)) { box.innerHTML = '<div class="text-sm text-muted">Strict non disponibile per quest’area.</div>'; return; }
 
-      const allowed = ['manhattan', 'brooklyn', 'queens', 'harlem', 'upper_manhattan'];
-      if (!allowed.includes(area)) {
-        box.innerHTML = '<div class="text-sm text-muted">Strict non disponibile per quest’area.</div>';
-        return;
-      }
-
-      const params = new URLSearchParams({ max: String(maxRent) });
+      const params = new URLSearchParams({ max:String(maxRent) });
       params.set('area', area);
       if (bedsMin) params.set('beds', String(bedsMin));
       if (zip) params.set('zip', zip);
-
       const qTerms = buildQueryTerms(leaseTakeover, directOwner, corpAssignable);
       if (qTerms) params.set('q', qTerms);
 
@@ -448,14 +444,13 @@
         const json = await res.json();
         box.innerHTML = '';
         if (!json.data || !json.data.length){
-          box.innerHTML = '<div class="text-sm text-muted">Nessun risultato ≤ $3.000 con questi filtri.</div>';
-          return;
+          box.innerHTML = '<div class="text-sm text-muted">Nessun risultato ≤ $3.000 con questi filtri.</div>'; return;
         }
         json.data.forEach(l => {
           const { emails, phones } = extractContactsFromTitle(l.title || '');
-          const a = document.createElement('div');
-          a.className = 'card border border-muted rounded-2xl bg-surface p-4';
-          a.innerHTML = `
+          const wrap = document.createElement('div');
+          wrap.className = 'card';
+          wrap.innerHTML = `
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <a href="${l.url}" target="_blank" rel="noopener" class="font-semibold hover:underline block truncate">${l.title || 'Listing'}</a>
@@ -465,37 +460,27 @@
                   <span class="badge">Craigslist</span>
                 </div>
                 <div class="text-xs text-muted mt-2">
-                  ${ (emails.length || phones.length)
-                    ? `Contatti rilevati: ${[...emails, ...phones].join(' · ')}`
-                    : `Apri l’annuncio per contatti/management.` }
+                  ${(emails.length || phones.length) ? `Contatti: ${[...emails, ...phones].join(' · ')}` : `Apri l’annuncio per contatti/management.`}
                 </div>
               </div>
               <div class="flex flex-col items-end gap-2 shrink-0">
-                <a href="${l.url}" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded border border-muted hover:border-white/50">Apri</a>
-                <button class="text-sm px-3 py-1 rounded bg-[var(--accent)] hover:bg-[var(--accent-700)] text-white" data-save="1">Salva</button>
+                <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-ghost h-8">Apri</a>
+                <button class="btn btn-primary h-8" data-save="1">Salva</button>
               </div>
             </div>
           `;
-          // salva handler
-          a.querySelector('[data-save]').addEventListener('click', ()=>{
-            saveOpportunity({
-              title: l.title || 'Listing',
-              url: l.url,
-              price: l.price || null,
-              zipcode: l.zipcode || null,
-              contacts: { emails, phones },
-              flags: { leaseTakeover, directOwner, corpAssignable },
-              at: Date.now()
-            });
+          wrap.querySelector('[data-save]').addEventListener('click', ()=>{
+            saveOpportunity({ title:l.title||'Listing', url:l.url, price:l.price||null, zipcode:l.zipcode||null,
+              contacts:{ emails, phones }, flags:{ leaseTakeover, directOwner, corpAssignable }, at:Date.now() });
           });
-          box.appendChild(a);
+          box.appendChild(wrap);
         });
       } catch (e) {
         box.innerHTML = '<div class="text-sm text-red-500">Errore nel caricamento.</div>';
       }
     }
 
-    // ===== Saved opportunities (local)
+    /* ====== Saved opportunities ====== */
     function saveOpportunity(op){
       const key = 'lease_opps';
       const arr = JSON.parse(localStorage.getItem(key) || '[]');
@@ -521,7 +506,7 @@
       arr.forEach((op,idx)=>{
         const d = new Date(op.at);
         const div = document.createElement('div');
-        div.className = 'card border border-muted rounded-2xl bg-surface p-4';
+        div.className = 'card';
         const tags = [];
         if (op.flags?.leaseTakeover) tags.push('lease takeover');
         if (op.flags?.directOwner) tags.push('direct owner');
@@ -542,8 +527,8 @@
               <div class="text-xs text-muted mt-1">${d.toLocaleString()}</div>
             </div>
             <div class="flex flex-col items-end gap-2 shrink-0">
-              <a href="${op.url}" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded border border-muted hover:border-white/50">Apri</a>
-              <button class="text-sm px-3 py-1 rounded border border-muted hover:border-white/50" data-del="${idx}">Elimina</button>
+              <a href="${op.url}" target="_blank" rel="noopener" class="btn btn-ghost h-8">Apri</a>
+              <button class="btn btn-ghost h-8" data-del="${idx}">Elimina</button>
             </div>
           </div>
         `;
@@ -552,7 +537,7 @@
       });
     }
 
-    // ===== Azioni
+    /* ====== Actions ====== */
     document.getElementById('build').addEventListener('click', buildProviderCards);
     document.getElementById('strict').addEventListener('click', loadStrict);
     document.getElementById('reset').addEventListener('click', ()=>{
@@ -574,15 +559,10 @@
     document.getElementById('leaseTakeover').addEventListener('change', buildProviderCards);
     document.getElementById('directOwner').addEventListener('change', buildProviderCards);
     document.getElementById('corpAssignable').addEventListener('change', buildProviderCards);
-    document.getElementById('clearNabe').addEventListener('click', ()=>{
-      document.getElementById('zip').value = '';
-      renderNabePills(); buildProviderCards();
-    });
-    document.getElementById('clearSaved').addEventListener('click', ()=>{
-      localStorage.removeItem('lease_opps'); renderSaved();
-    });
+    document.getElementById('clearNabe').addEventListener('click', ()=>{ document.getElementById('zip').value = ''; renderNabePills(); buildProviderCards(); });
+    document.getElementById('clearSaved').addEventListener('click', ()=>{ localStorage.removeItem('lease_opps'); renderSaved(); });
 
-    // ===== Init
+    /* ====== Init ====== */
     (function initFromQuery(){
       const u = new URL(location.href);
       const area = u.searchParams.get('area');
@@ -605,9 +585,9 @@
 
       updateLabels(); renderNabePills(); buildProviderCards(); renderSaved();
 
-      // sync pulsanti letti
+      // sync segmented
       const seg = document.getElementById('bedsSeg');
-      [...seg.children].forEach(b=>b.classList.toggle('beds-active', b.dataset.beds === (beds||'')));
+      [...seg.children].forEach(b=>b.classList.toggle('seg-active', b.dataset.beds === (beds||'')));
     })();
   </script>
 </body>
