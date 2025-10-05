@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>KeyCap NYC — Affitti ≤ $3.000</title>
-  <meta name="description" content="KeyCap NYC: affitti a Manhattan, Brooklyn e Queens entro $3.000 con link diretti ai principali portali. Filtri rapidi, ZIP, AI Assist e strict mode." />
+  <meta name="description" content="KeyCap NYC: affitti a Manhattan, Brooklyn e Queens entro $3.000 con link diretti ai principali portali. Filtri rapidi, ZIP, AI Assist, Strict mode e ricerca Lease Takeover." />
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Inter font -->
@@ -76,14 +76,14 @@
           <div class="w-full">
             <label class="block text-sm font-semibold mb-2">Chiedi a KeyCap (linguaggio naturale)</label>
             <div class="flex gap-2">
-              <input id="aiInput" placeholder="Es: brooklyn no-fee sotto 2700, 1+ letto, vicino a 11211"
+              <input id="aiInput" placeholder="Es: brooklyn no-fee 2700 1+ letto 11211 · oppure “lease takeover a Queens sotto 2500”"
                      class="flex-1 border border-muted rounded-xl p-3 bg-transparent text-sm" />
               <button id="aiGo" class="px-4 py-2 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-700)] text-white text-sm">
                 Applica
               </button>
             </div>
             <div id="aiTips" class="text-xs text-muted mt-2">
-              Capisco: area (manhattan, harlem, upper manhattan, brooklyn, queens), budget (2.7k / 2700$), letti (studio/1+/2+/3+), ZIP e "no-fee".
+              Capisco: area (manhattan/harlem/upper manhattan/brooklyn/queens), budget (2.7k / 2700$), letti (studio/1+/2+/3+), ZIP, “no-fee”, “lease takeover/assignment/break”.
             </div>
             <div id="aiExplain" class="mt-3 text-sm text-muted"></div>
           </div>
@@ -137,6 +137,11 @@
           <input id="noFee" type="checkbox" class="w-5 h-5" />
           No-fee
         </label>
+        <!-- NEW: Lease takeover toggle -->
+        <label class="flex items-center gap-2 text-sm font-semibold ml-1">
+          <input id="leaseTakeover" type="checkbox" class="w-5 h-5" />
+          Lease takeover
+        </label>
       </div>
     </section>
 
@@ -175,6 +180,10 @@
       <div class="rounded-xl px-4 py-3 text-sm border border-[var(--warn-br)] bg-[var(--warn-bg)] text-[var(--warn-fg)]">
         ⚠️ StreetEasy e Zillow possono mostrare annunci sponsorizzati o con “net effective rent” sopra soglia anche con filtro attivo.
         Usa <strong>Strict</strong> per risultati garantiti (oggi: solo Manhattan).
+      </div>
+      <!-- NEW: banner takeover -->
+      <div class="rounded-xl px-4 py-3 text-sm border border-muted bg-[rgba(22,163,74,.1)] text-[var(--accent)] mt-3">
+        💡 “Lease takeover” aggiunge alle ricerche: <em>lease assignment, lease takeover, lease break, assume lease, landlord approval</em>.
       </div>
     </section>
 
@@ -231,54 +240,27 @@
     // Quartieri rapidi (uno per area)
     const HOODS_BY_AREA = {
       manhattan: {
-        "Chelsea": "10011",
-        "West Village": "10014",
-        "East Village": "10009",
-        "SoHo": "10012",
-        "Lower East Side": "10002",
-        "Upper West Side": "10024",
-        "Upper East Side": "10021",
-        "Harlem": "10027",
-        "Financial District": "10004",
-        "Midtown": "10019"
+        "Chelsea": "10011", "West Village": "10014", "East Village": "10009", "SoHo": "10012",
+        "Lower East Side": "10002", "Upper West Side": "10024", "Upper East Side": "10021",
+        "Harlem": "10027", "Financial District": "10004", "Midtown": "10019"
       },
       harlem: {
-        "Central Harlem": "10027",
-        "East Harlem": "10029",
-        "Hamilton Heights": "10031",
-        "Sugar Hill": "10031",
-        "Washington Heights": "10033"
+        "Central Harlem": "10027", "East Harlem": "10029", "Hamilton Heights": "10031",
+        "Sugar Hill": "10031", "Washington Heights": "10033"
       },
       upper_manhattan: {
-        "Morningside Heights": "10027",
-        "Harlem": "10027",
-        "East Harlem": "10029",
-        "Washington Heights": "10033",
-        "Inwood": "10034"
+        "Morningside Heights": "10027", "Harlem": "10027", "East Harlem": "10029",
+        "Washington Heights": "10033", "Inwood": "10034"
       },
       brooklyn: {
-        "Williamsburg": "11211",
-        "Bushwick": "11237",
-        "Bed-Stuy": "11216",
-        "Park Slope": "11215",
-        "Brooklyn Heights": "11201",
-        "DUMBO": "11201",
-        "Fort Greene": "11205",
-        "Greenpoint": "11222",
-        "Sunset Park": "11220",
-        "Bay Ridge": "11209"
+        "Williamsburg": "11211", "Bushwick": "11237", "Bed-Stuy": "11216",
+        "Park Slope": "11215", "Brooklyn Heights": "11201", "DUMBO": "11201",
+        "Fort Greene": "11205", "Greenpoint": "11222", "Sunset Park": "11220", "Bay Ridge": "11209"
       },
       queens: {
-        "Long Island City": "11101",
-        "Astoria": "11103",
-        "Sunnyside": "11104",
-        "Jackson Heights": "11372",
-        "Elmhurst": "11373",
-        "Forest Hills": "11375",
-        "Flushing": "11355",
-        "Ridgewood": "11385",
-        "Jamaica": "11432",
-        "Rockaways": "11694"
+        "Long Island City": "11101", "Astoria": "11103", "Sunnyside": "11104",
+        "Jackson Heights": "11372", "Elmhurst": "11373", "Forest Hills": "11375",
+        "Flushing": "11355", "Ridgewood": "11385", "Jamaica": "11432", "Rockaways": "11694"
       }
     };
 
@@ -291,7 +273,8 @@
       const bedsMin = document.getElementById('bedsMin').value;
       const zip = (document.getElementById('zip').value || '').trim();
       const noFee = document.getElementById('noFee').checked;
-      return { area, maxRent, bedsMin, zip, noFee };
+      const leaseTakeover = document.getElementById('leaseTakeover').checked; // NEW
+      return { area, maxRent, bedsMin, zip, noFee, leaseTakeover };
     }
     function updateLabels(){
       const { area, maxRent } = readState();
@@ -371,8 +354,6 @@
 
     // ===== Provider URLs + BADGE (per area) =====
     function getAreaSlugs(area){
-      // StreetEasy/Zillow/RentHop/Craigslist differiscono per area
-      // Harlem/Upper Manhattan usano "manhattan" come base (con ZIP per raffinare)
       const seArea = (area==='brooklyn'||area==='queens') ? area : 'manhattan';
       const zlAreaMap = { manhattan: 'manhattan-new-york-ny', brooklyn: 'brooklyn-new-york-ny', queens: 'queens-new-york-ny' };
       const zlArea = zlAreaMap[area] || zlAreaMap['manhattan'];
@@ -386,50 +367,61 @@
       return { seArea, zlArea, rhArea, clArea, rlArea, hpArea };
     }
 
-    function getProviderLinks({ area, maxRent, bedsMin, zip, noFee }){
+    function getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover }){
       const enc = encodeURIComponent;
       const bedsParam = bedsMin ? bedsMin : '';
       const { seArea, zlArea, rhArea, clArea, rlArea, hpArea } = getAreaSlugs(area);
+
+      // Keyword takeover
+      const takeoverTerms = leaseTakeover
+        ? 'lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval'
+        : '';
 
       // StreetEasy
       let se = `https://streeteasy.com/for-rent/${seArea}?max_price=${maxRent}`;
       if (bedsParam) se += `&beds=${bedsParam}`;
       if (noFee) se += `&no_fee=true`;
       if (zip) se += `&search=zip:${zip}`;
+      if (takeoverTerms) se += `&search=${enc(takeoverTerms)}`;
 
       // Zillow
       let zl = `https://www.zillow.com/${zlArea}/rentals/?price=0-${maxRent}`;
       if (bedsParam) zl += `&beds=${bedsParam}-_`;
       if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
+      if (takeoverTerms && zip) zl += `&text=${enc(takeoverTerms)}`; // best effort quando c'è un contesto
 
       // RentHop
       let rh = `https://www.renthop.com/apartments-for-rent/nyc/${rhArea}?max_price=${maxRent}`;
       if (bedsParam) rh += `&min_beds=${bedsParam}`;
       if (noFee) rh += `&has_fee=false`;
       if (zip) rh += `&q=${zip}`;
+      if (takeoverTerms) rh += `&q=${enc(takeoverTerms)}`;
 
       // Craigslist
       let cl = `https://newyork.craigslist.org/search/${clArea}/apa?max_price=${maxRent}`;
       if (bedsParam) cl += `&min_bedrooms=${bedsParam}`;
       if (zip) cl += `&query=${enc(zip)}`;
+      if (takeoverTerms) cl += `${zip ? '+' : ''}${takeoverTerms ? `&query=${enc(takeoverTerms)}` : ''}`;
 
       // Realtor
       let rl = `https://www.realtor.com/apartments/${rlArea}/price-na-${maxRent}`;
       if (bedsParam) rl += `/beds-${bedsParam}`;
       if (zip) rl = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
+      // (Realtor non accetta facilmente query testuali da URL → user prompt manuale)
 
       // HotPads
       let hp = `https://hotpads.com/${hpArea}/apartments-for-rent?price=-${maxRent}`;
       if (bedsParam) hp += `&beds=${bedsParam}`;
       if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
+      // (HotPads: query testuale manuale dopo l’apertura)
 
       return [
-        { name: 'RentHop',                url: rh, status: 'validated' },
+        { name: 'RentHop',                 url: rh, status: 'validated' },
         { name: area==='manhattan' ? 'Craigslist (Manhattan)' : area==='brooklyn' ? 'Craigslist (Brooklyn)' : 'Craigslist (Queens)', url: cl, status: 'validated' },
-        { name: 'Realtor',                url: rl, status: 'link'      },
-        { name: 'HotPads',                url: hp, status: 'link'      },
-        { name: 'StreetEasy',             url: se, status: 'caution'   },
-        { name: 'Zillow',                 url: zl, status: 'caution'   },
+        { name: 'Realtor',                 url: rl, status: 'link'      },
+        { name: 'HotPads',                 url: hp, status: 'link'      },
+        { name: 'StreetEasy',              url: se, status: 'caution'   },
+        { name: 'Zillow',                  url: zl, status: 'caution'   },
       ];
     }
 
@@ -444,11 +436,11 @@
     }
 
     function buildProviderCards(){
-      const { area, maxRent, bedsMin, zip, noFee } = readState();
+      const { area, maxRent, bedsMin, zip, noFee, leaseTakeover } = readState();
       const p = document.getElementById('providers');
       p.innerHTML = '';
 
-      const providers = getProviderLinks({ area, maxRent, bedsMin, zip, noFee });
+      const providers = getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover });
       providers.forEach(pr => {
         const a = document.createElement('a');
         a.href = pr.url; a.target = '_blank'; a.rel = 'noopener';
@@ -467,25 +459,25 @@
             </div>
           </div>
           <p class="text-sm text-muted">
-            Filtri: ${document.getElementById('areaLabel').textContent} · max ${fmt.format(maxRent)}${zip?` · ZIP ${zip}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}
+            Filtri: ${document.getElementById('areaLabel').textContent} · max ${fmt.format(maxRent)}${zip?` · ZIP ${zip}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}${leaseTakeover?` · lease takeover`:''}
           </p>`;
         p.appendChild(a);
       });
 
       // share url
       const params = new URLSearchParams();
-      params.set('area', document.getElementById('area').value);
+      const areaSel = document.getElementById('area').value;
+      params.set('area', areaSel);
       params.set('max', String(maxRent));
       if (bedsMin) params.set('beds', bedsMin);
       if (zip) params.set('zip', zip);
       if (noFee) params.set('nofee', '1');
+      if (leaseTakeover) params.set('lt', '1'); // NEW
       history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
     // ===== Strict (serverless) =====
-    // ⚠️ Cambia questo con il tuo dominio Vercel se diverso
     const API_BASE = 'https://rent-finder-manhattan.vercel.app';
-
     async function loadStrict(){
       const { area, maxRent, bedsMin, zip } = readState();
       const box = document.getElementById('strictBox');
@@ -559,7 +551,7 @@
         card.innerHTML = `
           <div class="flex items-center justify-between">
             <div>
-              <div class="font-medium">${areaName} · ${fmtUSD.format(s.maxRent)}${s.zip?` · ${s.zip}`:''}${s.bedsMin?` · ${s.bedsMin}+bd`:''}${s.noFee?` · no-fee`:''}</div>
+              <div class="font-medium">${areaName} · ${fmtUSD.format(s.maxRent)}${s.zip?` · ${s.zip}`:''}${s.bedsMin?` · ${s.bedsMin}+bd`:''}${s.noFee?` · no-fee`:''}${s.leaseTakeover?` · lease takeover`:''}</div>
               <div class="text-xs text-muted">${d.toLocaleString()}</div>
             </div>
             <div class="flex gap-2">
@@ -580,8 +572,8 @@
             document.getElementById('bedsMin').value = s.bedsMin||'';
             document.getElementById('zip').value = s.zip||'';
             document.getElementById('noFee').checked = !!s.noFee;
+            document.getElementById('leaseTakeover').checked = !!s.leaseTakeover;
             updateLabels(); renderZipPills(); renderHoods(); buildProviderCards(); showToast('Ricerca caricata');
-            // sync segment
             const seg = document.getElementById('bedsSeg');
             [...seg.children].forEach(b=>b.classList.toggle('beds-active', b.dataset.beds === (s.bedsMin||'')));
           }
@@ -597,6 +589,7 @@
       document.getElementById('bedsMin').value = '';
       document.getElementById('zip').value = '';
       document.getElementById('noFee').checked = false;
+      document.getElementById('leaseTakeover').checked = false;
       updateLabels(); renderZipPills(); renderHoods(); buildProviderCards(); showToast('Filtri ripristinati');
       const seg = document.getElementById('bedsSeg');
       [...seg.children].forEach(b=>b.classList.toggle('beds-active', b.dataset.beds === ''));
@@ -608,17 +601,16 @@
     document.getElementById('strict').addEventListener('click', loadStrict);
     document.getElementById('maxRent').addEventListener('input', updateLabels);
     document.getElementById('area').addEventListener('change', ()=>{
-      // pulisci ZIP quando cambi area per evitare confusione
       document.getElementById('zip').value = '';
       updateLabels(); renderZipPills(); renderHoods(); buildProviderCards();
     });
+    document.getElementById('leaseTakeover').addEventListener('change', buildProviderCards);
 
     // ===== AI Assist =====
     function aiParse(query){
       const original = query;
       let q = query.toLowerCase();
 
-      // area
       let area = null;
       if (/upper\s*manhattan|uptown/.test(q)) area = 'upper_manhattan';
       else if (/\bharlem\b/.test(q)) area = 'harlem';
@@ -626,33 +618,30 @@
       else if (/\bbrooklyn\b/.test(q)) area = 'brooklyn';
       else if (/\bqueens\b/.test(q)) area = 'queens';
 
-      // budget
       let budget = null;
       const mK = q.match(/(\d+(?:[\.,]\d+)?)\s*k/);
       const mDollar = q.match(/\$?\s*(\d{3,5})(?!k)/);
       if (mK) budget = Math.round(parseFloat(mK[1].replace(',','.')) * 1000);
       else if (mDollar) budget = parseInt(mDollar[1].replace(/[^\d]/g,''), 10);
 
-      // letti
       let beds = null;
       if (/\bstudio\b/.test(q)) beds = '0';
       if (/\b1\+|\bone\b|\b1 bedroom\b/.test(q)) beds = '1';
       if (/\b2\+|\btwo\b|2 camere|2 bedroom/.test(q)) beds = '2';
       if (/\b3\+|\bthree\b|3 camere|3 bedroom/.test(q)) beds = '3';
 
-      // no-fee
       const nofee = /\bno[\s-]?fee\b|senza\s*fee|no\s*commission/i.test(original);
 
-      // zip
+      let takeover = /\blease\s*(assignment|takeover|break)\b|assume\s*lease|landlord\s*approval/i.test(original);
+
       let zip = null;
       const zipMatch = q.match(/\b(10\d{3}|1110[1-6]|11[3-4]\d{2}|1169[1-4]|11697|112\d{2})\b/);
       if (zipMatch) zip = zipMatch[1];
 
-      return { area, budget, beds, zip, nofee, _debug: { original } };
+      return { area, budget, beds, zip, nofee, takeover, _debug: { original } };
     }
 
     function aiSuggest({ area, budget }){
-      // Semplice messaggio di guida per area/budget
       const notes = [];
       if (area==='manhattan' && budget && budget<3000) {
         notes.push('In Manhattan sotto $3k trovi soprattutto studio/1BR. Valuta Harlem/Upper Manhattan per più 1-2BR.');
@@ -669,10 +658,10 @@
     async function runAI(){
       const input = document.getElementById('aiInput').value.trim();
       const out = document.getElementById('aiExplain');
-      if (!input){ out.textContent = 'Suggerimento: es. "brooklyn no-fee 2700 1+ letto 11211".'; return; }
+      if (!input){ out.textContent = 'Suggerimento: es. "lease takeover a Queens sotto 2500, 1+ letto, 11101".'; return; }
 
       const parsed = aiParse(input);
-      const { area, budget, beds, zip, nofee } = parsed;
+      const { area, budget, beds, zip, nofee, takeover } = parsed;
 
       const applied = [];
       if (area){ document.getElementById('area').value = area; applied.push(`area: ${area.replace('_',' ')}`); }
@@ -680,12 +669,11 @@
       if (beds!==null){ document.getElementById('bedsMin').value = beds; applied.push(`letti min: ${beds==0?'Studio':beds+'+'}`); }
       if (zip){ document.getElementById('zip').value = zip; applied.push(`ZIP: ${zip}`); }
       document.getElementById('noFee').checked = !!nofee; if (nofee) applied.push('no-fee');
+      document.getElementById('leaseTakeover').checked = !!takeover; if (takeover) applied.push('lease takeover');
 
-      // sync UI
       updateLabels(); renderZipPills(); renderHoods();
       const seg = document.getElementById('bedsSeg');
       [...seg.children].forEach(b=>b.classList.toggle('beds-active', b.dataset.beds === (beds??'')));
-
       buildProviderCards();
 
       const notes = aiSuggest({ area: area || document.getElementById('area').value, budget });
@@ -700,7 +688,7 @@
     document.getElementById('aiGo').addEventListener('click', runAI);
     document.getElementById('aiInput').addEventListener('keydown', (e)=>{ if (e.key==='Enter') runAI(); });
 
-    // ===== INIT =====
+    // ===== Init =====
     (function initFromQuery(){
       const u = new URL(location.href);
       const area = u.searchParams.get('area');
@@ -708,19 +696,27 @@
       const beds = u.searchParams.get('beds');
       const zip = u.searchParams.get('zip');
       const nofee = u.searchParams.get('nofee');
+      const lt = u.searchParams.get('lt'); // NEW
 
       if (area && document.querySelector(`#area option[value="${area}"]`)) document.getElementById('area').value = area;
       if (max) document.getElementById('maxRent').value = max;
       if (beds) document.getElementById('bedsMin').value = beds;
       if (zip) document.getElementById('zip').value = zip;
       if (nofee) document.getElementById('noFee').checked = true;
+      if (lt) document.getElementById('leaseTakeover').checked = true;
 
       updateLabels(); renderZipPills(); renderHoods(); buildProviderCards(); renderSaved();
 
-      // attiva correttamente il segmento letti
       const seg = document.getElementById('bedsSeg');
       [...seg.children].forEach(b=>b.classList.toggle('beds-active', b.dataset.beds === (beds||'')));
     })();
+
+    // ===== Toast util =====
+    function showToast(msg='Fatto!'){
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'), 1300);
+    }
   </script>
 </body>
 </html>
