@@ -169,6 +169,7 @@
 
     // ===== Helpers =====
     function buildQueryTerms(leaseTakeover, directOwner){
+      // SOLO PER SITI CHE GRADISCONO QUERY "RICCHE" (StreetEasy, Zillow via text)
       const takeover = leaseTakeover
         ? '(lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval)'
         : '';
@@ -179,6 +180,14 @@
         ? '(-sublet -room -roommate -short-term -temporary -share)'
         : '';
       return [takeover, directPos, directNeg].filter(Boolean).join(' ');
+    }
+
+    // Termini SEMPLICI per Craigslist (niente parentesi/operatori)
+    function buildSimpleTerms(leaseTakeover, directOwner){
+      const t = [];
+      if (leaseTakeover) t.push('lease takeover','assignment','assume lease','lease break','landlord approval');
+      if (directOwner)   t.push('direct to owner','owner managed','management','leasing office','no broker','sponsor unit');
+      return t.join(' ');
     }
 
     function getAreaSlugs(area){
@@ -262,7 +271,8 @@
       const enc = encodeURIComponent;
       const bedsParam = bedsMin ? bedsMin : '';
       const { seArea, zlArea, clArea, hpArea } = getAreaSlugs(area);
-      const qTerms = buildQueryTerms(leaseTakeover, directOwner);
+      const qTerms = buildQueryTerms(leaseTakeover, directOwner);         // per SE/Zillow
+      const simpleCL = buildSimpleTerms(leaseTakeover, directOwner);      // per Craigslist
 
       // StreetEasy
       let se = `https://streeteasy.com/for-rent/${seArea}?max_price=${maxRent}`;
@@ -275,21 +285,23 @@
       let zl = `https://www.zillow.com/${zlArea}/rentals/?price=0-${maxRent}`;
       if (bedsParam) zl += `&beds=${bedsParam}-_`;
       if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
-      if (qTerms && zip) zl += `&text=${enc(qTerms)}`; // best-effort, con ZIP
+      if (qTerms && zip) zl += `&text=${enc(qTerms)}`;
 
       // HotPads
       let hp = `https://hotpads.com/${hpArea}/apartments-for-rent?price=-${maxRent}`;
       if (bedsParam) hp += `&beds=${bedsParam}`;
       if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
-      // (HotPads non offre query testuali affidabili nell’URL, quindi niente qTerms)
 
-      // Craigslist
+      // Craigslist — niente parentesi/OR/NOT; ZIP via postal + search_distance
       const clParams = new URLSearchParams();
       clParams.set('max_price', String(maxRent));
       if (bedsParam) clParams.set('min_bedrooms', String(bedsParam));
-      const clQuery = [zip, qTerms].filter(Boolean).join(' ');
-      if (clQuery) clParams.set('query', clQuery);
-      let cl = `https://newyork.craigslist.org/search/${clArea}/apa?${clParams.toString()}`;
+      if (zip){
+        clParams.set('postal', zip);
+        clParams.set('search_distance', '2'); // raggio 2 miglia
+      }
+      if (simpleCL) clParams.set('query', simpleCL);
+      const cl = `https://newyork.craigslist.org/search/${clArea}/apa?${clParams.toString()}`;
 
       return [
         { name: 'HotPads',    url: hp },
@@ -361,6 +373,7 @@
       if (bedsMin) params.set('beds', String(bedsMin));
       if (zip) params.set('zip', zip);
 
+      // Anche nell’API uso i termini “ricchi”; l’handler filtra lato server
       const qTerms = buildQueryTerms(leaseTakeover, directOwner);
       if (qTerms) params.set('q', qTerms);
 
