@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>KeyCap NYC — Affitti ≤ $3.000</title>
-  <meta name="description" content="KeyCap NYC: affitti a Manhattan, Brooklyn e Queens entro $3.000. Filtri rapidi, quartieri, Strict mode, Lease Takeover e Direct to Owner." />
+  <title>KeyCap NYC — Lease Hunter ≤ $3.000</title>
+  <meta name="description" content="KeyCap NYC: radar per affitti ≤ $3.000 a Manhattan, Brooklyn e Queens. Quartieri, Strict, Lease Takeover, Direct to Owner, Corporate/Assignable e salvataggio opportunità." />
   <script src="https://cdn.tailwindcss.com"></script>
 
   <!-- Inter font -->
@@ -43,11 +43,11 @@
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
     input[type="checkbox"]{ accent-color: var(--accent); }
+    .badge{ font-size:.65rem; padding:.15rem .4rem; border-radius:.4rem; border:1px solid var(--border); color:var(--muted);}
   </style>
 </head>
 <body>
   <main class="max-w-6xl mx-auto p-6">
-
     <!-- Header -->
     <header class="flex items-center gap-3 py-4 border-b border-muted mb-6">
       <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" class="rounded-xl">
@@ -60,7 +60,7 @@
           KeyCap <span class="text-[#16a34a]">NYC</span>
         </h1>
         <p class="text-sm text-muted mt-1">
-          Affitti a <span id="areaLabel">Manhattan</span> ≤ <span id="maxRentLabel">$3,000</span>
+          Lease Hunter in <span id="areaLabel">Manhattan</span> ≤ <span id="maxRentLabel">$3,000</span>
         </p>
       </div>
     </header>
@@ -68,7 +68,7 @@
     <!-- Avviso -->
     <section class="mt-1 mb-5">
       <div class="rounded-xl px-4 py-3 text-sm border border-[var(--warn-br)] bg-[var(--warn-bg)] text-[var(--warn-fg)]">
-        ⚠️ StreetEasy e Zillow possono mostrare annunci sponsorizzati o “net effective” sopra soglia. Usa <strong>Strict</strong> per risultati garantiti (Craigslist).
+        ⚠️ Alcuni portali mostrano sponsorizzati o “net effective” sopra soglia. <strong>Strict</strong> ti mostra solo risultati ≤ $3.000 (Craigslist).
       </div>
     </section>
 
@@ -124,6 +124,10 @@
           <input id="directOwner" type="checkbox" class="w-5 h-5" />
           Direct to owner
         </label>
+        <label class="flex items-center gap-2 text-sm font-semibold" title="Lease aziendali o assegnabili">
+          <input id="corpAssignable" type="checkbox" class="w-5 h-5" />
+          Corporate / Assignable
+        </label>
       </div>
     </section>
 
@@ -141,11 +145,24 @@
 
     <!-- Strict -->
     <section class="mt-8">
-      <h2 class="text-lg font-semibold mb-2">Strict (Craigslist) ≤ $3.000</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold mb-2">Strict (Craigslist) ≤ $3.000</h2>
+        <span class="badge">solo ≤$3k</span>
+      </div>
       <div id="strictBox" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
       <p class="text-xs text-muted mt-2" id="strictNote">
         Strict attivo per Manhattan, Brooklyn e Queens (Harlem/Upper Manhattan = Manhattan).
       </p>
+    </section>
+
+    <!-- Opportunità salvate -->
+    <section class="mt-10">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Opportunità salvate</h2>
+        <button id="clearSaved" class="text-xs px-2 py-1 rounded border border-muted text-muted hover:text-white hover:border-white/30">Svuota</button>
+      </div>
+      <div id="savedBox" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2"></div>
+      <p id="savedEmpty" class="text-sm text-muted mt-2">Nessuna opportunità salvata.</p>
     </section>
 
     <footer class="mt-12 text-xs text-muted">
@@ -154,7 +171,7 @@
   </main>
 
   <script>
-    // ===== Mapping quartieri -> ZIP di riferimento =====
+    // ===== Quartieri -> ZIP =====
     const NABES = {
       manhattan: [
         { name:'SoHo', zip:'10012' }, { name:'NoHo', zip:'10012' }, { name:'Tribeca', zip:'10013' },
@@ -186,25 +203,24 @@
       ]
     };
 
-    // ===== Helpers =====
-    function buildQueryTerms(leaseTakeover, directOwner){
-      const takeover = leaseTakeover
-        ? '(lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval)'
-        : '';
-      const directPos = directOwner
-        ? '(direct to owner OR owner managed OR management OR leasing office OR no broker OR apply through management OR sponsor unit)'
-        : '';
-      const directNeg = directOwner
-        ? '(-sublet -room -roommate -short-term -temporary -share)'
-        : '';
-      return [takeover, directPos, directNeg].filter(Boolean).join(' ');
-    }
-    function buildSimpleTerms(leaseTakeover, directOwner){
+    // ===== Helpers: query terms =====
+    function buildQueryTerms(leaseTakeover, directOwner, corpAssignable){
       const t = [];
-      if (leaseTakeover) t.push('lease takeover','assignment','assume lease','lease break','landlord approval');
-      if (directOwner)   t.push('direct to owner','owner managed','management','leasing office','no broker','sponsor unit');
+      if (leaseTakeover) t.push('(lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval)');
+      if (directOwner)   t.push('(direct to owner OR owner managed OR management OR leasing office OR no broker OR apply through management OR sponsor unit)', '(-sublet -room -roommate -short-term -temporary -share)');
+      if (corpAssignable) t.push('(corporate lease OR assignable lease OR sublet allowed OR subletting allowed OR assignment permitted OR corporate housing)');
       return t.join(' ');
     }
+    function buildSimpleTerms(leaseTakeover, directOwner, corpAssignable){
+      // versione “senza parentesi” per Craigslist (evita 404)
+      const t = [];
+      if (leaseTakeover)  t.push('lease takeover','assignment','assume lease','lease break','landlord approval');
+      if (directOwner)    t.push('direct to owner','owner managed','management','leasing office','no broker','sponsor unit');
+      if (corpAssignable) t.push('corporate lease','assignable lease','sublet allowed','assignment permitted','corporate housing');
+      return t.join(' ');
+    }
+
+    // ===== Slugs area =====
     function getAreaSlugs(area){
       const seArea = (area==='brooklyn'||area==='queens') ? area : 'manhattan';
       const zlAreaMap = { manhattan: 'manhattan-new-york-ny', brooklyn: 'brooklyn-new-york-ny', queens: 'queens-new-york-ny' };
@@ -222,7 +238,7 @@
     }
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-    // ===== Stato/Label =====
+    // ===== Stato & UI =====
     function readState(){
       const area = document.getElementById('area').value;
       const maxRent = Math.max(0, parseInt(document.getElementById('maxRent').value || '3000', 10));
@@ -231,7 +247,8 @@
       const noFee = document.getElementById('noFee').checked;
       const leaseTakeover = document.getElementById('leaseTakeover').checked;
       const directOwner = document.getElementById('directOwner').checked;
-      return { area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner };
+      const corpAssignable = document.getElementById('corpAssignable').checked;
+      return { area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner, corpAssignable };
     }
     function updateLabels(){
       const { area, maxRent } = readState();
@@ -241,7 +258,7 @@
       document.getElementById('nabeAreaLabel').textContent = areaName;
     }
 
-    // ===== Beds segmented =====
+    // Beds segmented
     (function initBedsSeg(){
       const seg = document.getElementById('bedsSeg');
       const hidden = document.getElementById('bedsMin');
@@ -262,7 +279,7 @@
       setActive(hidden.value || '');
     })();
 
-    // ===== Quartieri pills =====
+    // Quartieri pills
     function renderNabePills(){
       const box = document.getElementById('nabePills');
       const { area } = readState();
@@ -284,13 +301,13 @@
       });
     }
 
-    // ===== Provider URLs (6 sorgenti) =====
-    function getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner }){
+    // Provider URLs (6 sorgenti)
+    function getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner, corpAssignable }){
       const enc = encodeURIComponent;
       const bedsParam = bedsMin ? bedsMin : '';
       const { seArea, zlArea, clArea, hpArea, citySlug, rlArea } = getAreaSlugs(area);
-      const qTerms = buildQueryTerms(leaseTakeover, directOwner);    // SE/Zillow
-      const simpleCL = buildSimpleTerms(leaseTakeover, directOwner); // Craigslist
+      const qTerms = buildQueryTerms(leaseTakeover, directOwner, corpAssignable);    // SE/Zillow
+      const simpleCL = buildSimpleTerms(leaseTakeover, directOwner, corpAssignable); // Craigslist
 
       // StreetEasy
       let se = `https://streeteasy.com/for-rent/${seArea}?max_price=${maxRent}`;
@@ -344,11 +361,11 @@
     }
 
     function buildProviderCards(){
-      const { area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner } = readState();
+      const { area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner, corpAssignable } = readState();
       const p = document.getElementById('providers');
       p.innerHTML = '';
 
-      const providers = getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner });
+      const providers = getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner, corpAssignable });
       providers.forEach(pr => {
         const a = document.createElement('a');
         a.href = pr.url; a.target = '_blank'; a.rel = 'noopener';
@@ -364,12 +381,12 @@
             </span>
           </div>
           <p class="text-sm text-muted">
-            Filtri: ${areaLabelText()} · max ${fmt.format(maxRent)}${zip?` · ${zipToNabe(zip) || ('ZIP '+zip)}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}${leaseTakeover?` · lease takeover`:''}${directOwner?` · direct owner`:''}
+            Filtri: ${areaLabelText()} · max ${fmt.format(maxRent)}${zip?` · ${zipToNabe(zip) || ('ZIP '+zip)}`:''}${bedsMin?` · ${bedsMin}+ letti`:''}${noFee?` · no-fee`:''}${leaseTakeover?` · lease takeover`:''}${directOwner?` · direct owner`:''}${corpAssignable?` · corporate/assignable`:''}
           </p>`;
         p.appendChild(a);
       });
 
-      // share url minimale
+      // share url
       const params = new URLSearchParams();
       params.set('area', area);
       params.set('max', String(maxRent));
@@ -378,6 +395,7 @@
       if (noFee) params.set('nofee', '1');
       if (leaseTakeover) params.set('lt', '1');
       if (directOwner) params.set('do', '1');
+      if (corpAssignable) params.set('ca', '1');
       history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
@@ -385,7 +403,6 @@
       const val = document.getElementById('area').value;
       return val === 'upper_manhattan' ? 'Upper Manhattan' : (val.charAt(0).toUpperCase()+val.slice(1)).replace('_',' ');
     }
-
     function zipToNabe(zip){
       for (const area in NABES){
         const hit = NABES[area].find(n=>n.zip===zip);
@@ -394,11 +411,21 @@
       return null;
     }
 
-    // ===== Strict (serverless) =====
+    // ===== Strict (serverless)
     const API_BASE = 'https://rent-finder-manhattan.vercel.app';
 
+    // Regex contatti (title-based, no scraping)
+    const mailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig;
+    const phoneRe = /(?:(?:\+1[\s-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/g;
+
+    function extractContactsFromTitle(title){
+      const emails = (title.match(mailRe)||[]).slice(0,2);
+      const phones = (title.match(phoneRe)||[]).slice(0,2);
+      return { emails, phones };
+    }
+
     async function loadStrict(){
-      const { area, maxRent, bedsMin, zip, leaseTakeover, directOwner } = readState();
+      const { area, maxRent, bedsMin, zip, leaseTakeover, directOwner, corpAssignable } = readState();
       const box = document.getElementById('strictBox');
 
       const allowed = ['manhattan', 'brooklyn', 'queens', 'harlem', 'upper_manhattan'];
@@ -412,7 +439,7 @@
       if (bedsMin) params.set('beds', String(bedsMin));
       if (zip) params.set('zip', zip);
 
-      const qTerms = buildQueryTerms(leaseTakeover, directOwner);
+      const qTerms = buildQueryTerms(leaseTakeover, directOwner, corpAssignable);
       if (qTerms) params.set('q', qTerms);
 
       box.innerHTML = '<div class="text-sm text-muted">Caricamento…</div>';
@@ -425,17 +452,42 @@
           return;
         }
         json.data.forEach(l => {
-          const a = document.createElement('a');
-          a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
-          a.className = 'card block border border-muted rounded-2xl bg-surface p-4';
+          const { emails, phones } = extractContactsFromTitle(l.title || '');
+          const a = document.createElement('div');
+          a.className = 'card border border-muted rounded-2xl bg-surface p-4';
           a.innerHTML = `
-            <div class="flex items-center justify-between mb-1">
-              <div class="font-semibold truncate pr-2">${l.title || 'Listing'}</div>
-              <span class="text-sm">$${l.price || ''}</span>
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <a href="${l.url}" target="_blank" rel="noopener" class="font-semibold hover:underline block truncate">${l.title || 'Listing'}</a>
+                <div class="text-sm text-muted mt-1 flex flex-wrap items-center gap-2">
+                  <span class="badge">$${l.price || ''}</span>
+                  <span class="badge">ZIP ${l.zipcode || '—'}</span>
+                  <span class="badge">Craigslist</span>
+                </div>
+                <div class="text-xs text-muted mt-2">
+                  ${ (emails.length || phones.length)
+                    ? `Contatti rilevati: ${[...emails, ...phones].join(' · ')}`
+                    : `Apri l’annuncio per contatti/management.` }
+                </div>
+              </div>
+              <div class="flex flex-col items-end gap-2 shrink-0">
+                <a href="${l.url}" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded border border-muted hover:border-white/50">Apri</a>
+                <button class="text-sm px-3 py-1 rounded bg-[var(--accent)] hover:bg-[var(--accent-700)] text-white" data-save="1">Salva</button>
+              </div>
             </div>
-            <div class="text-sm text-muted">ZIP ${l.zipcode || '—'}</div>
-            <div class="text-xs text-muted mt-1">Fonte: Craigslist</div>
           `;
+          // salva handler
+          a.querySelector('[data-save]').addEventListener('click', ()=>{
+            saveOpportunity({
+              title: l.title || 'Listing',
+              url: l.url,
+              price: l.price || null,
+              zipcode: l.zipcode || null,
+              contacts: { emails, phones },
+              flags: { leaseTakeover, directOwner, corpAssignable },
+              at: Date.now()
+            });
+          });
           box.appendChild(a);
         });
       } catch (e) {
@@ -443,7 +495,64 @@
       }
     }
 
-    // ===== Azioni =====
+    // ===== Saved opportunities (local)
+    function saveOpportunity(op){
+      const key = 'lease_opps';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr.unshift(op);
+      localStorage.setItem(key, JSON.stringify(arr.slice(0, 60)));
+      renderSaved();
+    }
+    function deleteOpportunity(idx){
+      const key = 'lease_opps';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      arr.splice(idx,1);
+      localStorage.setItem(key, JSON.stringify(arr));
+      renderSaved();
+    }
+    function renderSaved(){
+      const key = 'lease_opps';
+      const arr = JSON.parse(localStorage.getItem(key) || '[]');
+      const grid = document.getElementById('savedBox');
+      const empty = document.getElementById('savedEmpty');
+      grid.innerHTML = '';
+      if (!arr.length){ empty.style.display='block'; return; }
+      empty.style.display='none';
+      arr.forEach((op,idx)=>{
+        const d = new Date(op.at);
+        const div = document.createElement('div');
+        div.className = 'card border border-muted rounded-2xl bg-surface p-4';
+        const tags = [];
+        if (op.flags?.leaseTakeover) tags.push('lease takeover');
+        if (op.flags?.directOwner) tags.push('direct owner');
+        if (op.flags?.corpAssignable) tags.push('corp/assignable');
+        const contactLine = (op.contacts?.emails?.length || op.contacts?.phones?.length)
+          ? [...(op.contacts.emails||[]), ...(op.contacts.phones||[])].join(' · ')
+          : '—';
+        div.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <a href="${op.url}" target="_blank" rel="noopener" class="font-semibold hover:underline block truncate">${op.title}</a>
+              <div class="text-sm text-muted mt-1 flex flex-wrap items-center gap-2">
+                ${op.price?`<span class="badge">$${op.price}</span>`:''}
+                ${op.zipcode?`<span class="badge">ZIP ${op.zipcode}</span>`:''}
+                ${tags.length?`<span class="badge">${tags.join(' · ')}</span>`:''}
+              </div>
+              <div class="text-xs text-muted mt-2">Contatti: ${contactLine}</div>
+              <div class="text-xs text-muted mt-1">${d.toLocaleString()}</div>
+            </div>
+            <div class="flex flex-col items-end gap-2 shrink-0">
+              <a href="${op.url}" target="_blank" rel="noopener" class="text-sm px-3 py-1 rounded border border-muted hover:border-white/50">Apri</a>
+              <button class="text-sm px-3 py-1 rounded border border-muted hover:border-white/50" data-del="${idx}">Elimina</button>
+            </div>
+          </div>
+        `;
+        div.querySelector(`[data-del="${idx}"]`).addEventListener('click', ()=> deleteOpportunity(idx));
+        grid.appendChild(div);
+      });
+    }
+
+    // ===== Azioni
     document.getElementById('build').addEventListener('click', buildProviderCards);
     document.getElementById('strict').addEventListener('click', loadStrict);
     document.getElementById('reset').addEventListener('click', ()=>{
@@ -454,22 +563,26 @@
       document.getElementById('noFee').checked = false;
       document.getElementById('leaseTakeover').checked = false;
       document.getElementById('directOwner').checked = false;
-      updateLabels(); renderNabePills(); buildProviderCards();
+      document.getElementById('corpAssignable').checked = false;
+      updateLabels(); renderNabePills(); buildProviderCards(); renderSaved();
     });
     document.getElementById('area').addEventListener('change', ()=>{
-      // Cambio area → tolgo lo ZIP e rendo i quartieri relativi
       document.getElementById('zip').value = '';
       updateLabels(); renderNabePills(); buildProviderCards();
     });
     document.getElementById('maxRent').addEventListener('input', updateLabels);
     document.getElementById('leaseTakeover').addEventListener('change', buildProviderCards);
     document.getElementById('directOwner').addEventListener('change', buildProviderCards);
+    document.getElementById('corpAssignable').addEventListener('change', buildProviderCards);
     document.getElementById('clearNabe').addEventListener('click', ()=>{
       document.getElementById('zip').value = '';
       renderNabePills(); buildProviderCards();
     });
+    document.getElementById('clearSaved').addEventListener('click', ()=>{
+      localStorage.removeItem('lease_opps'); renderSaved();
+    });
 
-    // ===== Init from query =====
+    // ===== Init
     (function initFromQuery(){
       const u = new URL(location.href);
       const area = u.searchParams.get('area');
@@ -479,6 +592,7 @@
       const nofee = u.searchParams.get('nofee');
       const lt = u.searchParams.get('lt');
       const dO = u.searchParams.get('do');
+      const ca = u.searchParams.get('ca');
 
       if (area && document.querySelector(`#area option[value="${area}"]`)) document.getElementById('area').value = area;
       if (max) document.getElementById('maxRent').value = max;
@@ -487,8 +601,9 @@
       if (nofee) document.getElementById('noFee').checked = true;
       if (lt) document.getElementById('leaseTakeover').checked = true;
       if (dO) document.getElementById('directOwner').checked = true;
+      if (ca) document.getElementById('corpAssignable').checked = true;
 
-      updateLabels(); renderNabePills(); buildProviderCards();
+      updateLabels(); renderNabePills(); buildProviderCards(); renderSaved();
 
       // sync pulsanti letti
       const seg = document.getElementById('bedsSeg');
