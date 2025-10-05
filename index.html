@@ -169,7 +169,7 @@
 
     // ===== Helpers =====
     function buildQueryTerms(leaseTakeover, directOwner){
-      // Per siti che accettano query ricche (StreetEasy/Zillow)
+      // Query "ricche" per SE/Zillow
       const takeover = leaseTakeover
         ? '(lease assignment OR lease takeover OR lease break OR assume lease OR landlord approval)'
         : '';
@@ -181,7 +181,7 @@
         : '';
       return [takeover, directPos, directNeg].filter(Boolean).join(' ');
     }
-    // Termini SEMPLICI per Craigslist (evita 404)
+    // Query SEMPLICI per Craigslist (evita 404)
     function buildSimpleTerms(leaseTakeover, directOwner){
       const t = [];
       if (leaseTakeover) t.push('lease takeover','assignment','assume lease','lease break','landlord approval');
@@ -196,11 +196,14 @@
       const clArea = clAreaMap[area] || 'mnh';
       const hpAreaMap = { manhattan: 'manhattan-new-york-ny', brooklyn: 'brooklyn-ny', queens: 'queens-ny' };
       const hpArea = hpAreaMap[area] || hpAreaMap['manhattan'];
-      // slug città per Apartments/Rent
+      // slug città per Apartments
       const cityMap = { manhattan: 'manhattan-ny', brooklyn: 'brooklyn-ny', queens: 'queens-ny' };
       const cityGeneric = 'new-york-ny';
       const citySlug = cityMap[area] || cityGeneric;
-      return { seArea, zlArea, clArea, hpArea, citySlug, cityGeneric };
+      // area per Realtor
+      const rlAreaMap = { manhattan: 'Manhattan_NY', harlem: 'Manhattan_NY', upper_manhattan: 'Manhattan_NY', brooklyn: 'Brooklyn_NY', queens: 'Queens_NY' };
+      const rlArea = rlAreaMap[area] || 'Manhattan_NY';
+      return { seArea, zlArea, clArea, hpArea, citySlug, cityGeneric, rlArea };
     }
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
@@ -267,67 +270,63 @@
     }
 
     // ===== Provider URLs (6 sorgenti) =====
-  function getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner }) {
-  const enc = encodeURIComponent;
-  const bedsParam = bedsMin ? bedsMin : '';
-  const { seArea, zlArea, clArea, hpArea, citySlug, cityGeneric } = getAreaSlugs(area);
-  const qTerms = buildQueryTerms(leaseTakeover, directOwner);
-  const simpleCL = buildSimpleTerms(leaseTakeover, directOwner);
+    function getProviderLinks({ area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner }){
+      const enc = encodeURIComponent;
+      const bedsParam = bedsMin ? bedsMin : '';
+      const { seArea, zlArea, clArea, hpArea, citySlug, rlArea } = getAreaSlugs(area);
+      const qTerms = buildQueryTerms(leaseTakeover, directOwner);    // SE/Zillow
+      const simpleCL = buildSimpleTerms(leaseTakeover, directOwner); // Craigslist
 
-  // StreetEasy
-  let se = `https://streeteasy.com/for-rent/${seArea}?max_price=${maxRent}`;
-  if (bedsParam) se += `&beds=${bedsParam}`;
-  if (noFee) se += `&no_fee=true`;
-  if (zip) se += `&search=zip:${zip}`;
-  if (qTerms) se += `&search=${enc(qTerms)}`;
+      // StreetEasy
+      let se = `https://streeteasy.com/for-rent/${seArea}?max_price=${maxRent}`;
+      if (bedsParam) se += `&beds=${bedsParam}`;
+      if (noFee) se += `&no_fee=true`;
+      if (zip) se += `&search=zip:${zip}`;
+      if (qTerms) se += `&search=${enc(qTerms)}`;
 
-  // Zillow
-  let zl = `https://www.zillow.com/${zlArea}/rentals/?price=0-${maxRent}`;
-  if (bedsParam) zl += `&beds=${bedsParam}-_`;
-  if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
-  if (qTerms && zip) zl += `&text=${enc(qTerms)}`;
+      // Zillow
+      let zl = `https://www.zillow.com/${zlArea}/rentals/?price=0-${maxRent}`;
+      if (bedsParam) zl += `&beds=${bedsParam}-_`;
+      if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
+      if (qTerms && zip) zl += `&text=${enc(qTerms)}`;
 
-  // HotPads
-  let hp = `https://hotpads.com/${hpArea}/apartments-for-rent?price=-${maxRent}`;
-  if (bedsParam) hp += `&beds=${bedsParam}`;
-  if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
+      // HotPads
+      let hp = `https://hotpads.com/${hpArea}/apartments-for-rent?price=-${maxRent}`;
+      if (bedsParam) hp += `&beds=${bedsParam}`;
+      if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
 
-  // Apartments.com (fix parametri)
-  let ap;
-  if (zip) {
-    ap = `https://www.apartments.com/apartments/${zip}/?max-price=${maxRent}`;
-  } else {
-    ap = `https://www.apartments.com/${citySlug}/?max-price=${maxRent}`;
-  }
-  if (bedsParam) ap += `&beds=${bedsParam}`;
+      // Apartments.com (parametro corretto: max-price)
+      let ap;
+      if (zip) {
+        ap = `https://www.apartments.com/apartments/${zip}/?max-price=${maxRent}`;
+      } else {
+        ap = `https://www.apartments.com/${citySlug}/?max-price=${maxRent}`;
+      }
+      if (bedsParam) ap += `&beds=${bedsParam}`;
 
-  // Realtor.com
-  let re = `https://www.realtor.com/apartments/${citySlug}/price-${maxRent}`;
-  if (bedsParam) re += `/beds-${bedsParam}`;
-  if (zip) re = `https://www.realtor.com/apartments/${zip}/price-${maxRent}`;
-  if (noFee) re += '?keyword=no+fee';
+      // Realtor.com (usa area o ZIP; formato max-only: price-na-<max>)
+      let re = `https://www.realtor.com/apartments/${rlArea}/price-na-${maxRent}`;
+      if (bedsParam) re += `/beds-${bedsParam}`;
+      if (zip) re = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
+      if (noFee) re += (re.includes('?') ? '&' : '?') + 'keyword=no+fee';
 
-  // Craigslist
-  const clParams = new URLSearchParams();
-  clParams.set('max_price', String(maxRent));
-  if (bedsParam) clParams.set('min_bedrooms', String(bedsParam));
-  if (zip) {
-    clParams.set('postal', zip);
-    clParams.set('search_distance', '2');
-  }
-  if (simpleCL) clParams.set('query', simpleCL);
-  const cl = `https://newyork.craigslist.org/search/${clArea}/apa?${clParams.toString()}`;
+      // Craigslist — ZIP via postal + search_distance, query semplice
+      const clParams = new URLSearchParams();
+      clParams.set('max_price', String(maxRent));
+      if (bedsParam) clParams.set('min_bedrooms', String(bedsParam));
+      if (zip){ clParams.set('postal', zip); clParams.set('search_distance', '2'); }
+      if (simpleCL) clParams.set('query', simpleCL);
+      const cl = `https://newyork.craigslist.org/search/${clArea}/apa?${clParams.toString()}`;
 
-  return [
-    { name: 'HotPads', url: hp },
-    { name: 'Craigslist', url: cl },
-    { name: 'StreetEasy', url: se },
-    { name: 'Zillow', url: zl },
-    { name: 'Apartments.com', url: ap },
-    { name: 'Realtor.com', url: re },
-  ];
-}
-
+      return [
+        { name: 'HotPads',        url: hp },
+        { name: area==='manhattan' ? 'Craigslist (Manhattan)' : area==='brooklyn' ? 'Craigslist (Brooklyn)' : 'Craigslist (Queens)', url: cl },
+        { name: 'StreetEasy',     url: se },
+        { name: 'Zillow',         url: zl },
+        { name: 'Apartments.com', url: ap },
+        { name: 'Realtor.com',    url: re },
+      ];
+    }
 
     function buildProviderCards(){
       const { area, maxRent, bedsMin, zip, noFee, leaseTakeover, directOwner } = readState();
