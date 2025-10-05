@@ -76,7 +76,7 @@
           <div class="w-full">
             <label class="block text-sm font-semibold mb-2">Chiedi a KeyCap (linguaggio naturale)</label>
             <div class="flex gap-2">
-              <input id="aiInput" placeholder="Es: brooklyn no-fee 2700 1+ letto 11211 · oppure “lease takeover a Queens sotto 2500”"
+              <input id="aiInput" placeholder="Es: lease takeover a Queens sotto 2500, 1+ letto, 11101 · no-fee"
                      class="flex-1 border border-muted rounded-xl p-3 bg-transparent text-sm" />
               <button id="aiGo" class="px-4 py-2 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-700)] text-white text-sm">
                 Applica
@@ -137,7 +137,6 @@
           <input id="noFee" type="checkbox" class="w-5 h-5" />
           No-fee
         </label>
-        <!-- NEW: Lease takeover toggle -->
         <label class="flex items-center gap-2 text-sm font-semibold ml-1">
           <input id="leaseTakeover" type="checkbox" class="w-5 h-5" />
           Lease takeover
@@ -179,9 +178,8 @@
     <section class="mt-3 mb-6">
       <div class="rounded-xl px-4 py-3 text-sm border border-[var(--warn-br)] bg-[var(--warn-bg)] text-[var(--warn-fg)]">
         ⚠️ StreetEasy e Zillow possono mostrare annunci sponsorizzati o con “net effective rent” sopra soglia anche con filtro attivo.
-        Usa <strong>Strict</strong> per risultati garantiti (oggi: solo Manhattan).
+        Usa <strong>Strict</strong> per risultati garantiti.
       </div>
-      <!-- NEW: banner takeover -->
       <div class="rounded-xl px-4 py-3 text-sm border border-muted bg-[rgba(22,163,74,.1)] text-[var(--accent)] mt-3">
         💡 “Lease takeover” aggiunge alle ricerche: <em>lease assignment, lease takeover, lease break, assume lease, landlord approval</em>.
       </div>
@@ -194,7 +192,9 @@
     <section class="mt-8">
       <h2 class="text-lg font-semibold mb-2">Risultati filtrati (serverless) ≤ $3.000</h2>
       <div id="strictBox" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-      <p class="text-xs text-muted mt-2" id="strictNote">Strict attivo per Manhattan. Per Brooklyn/Queens estenderemo presto l’API.</p>
+      <p class="text-xs text-muted mt-2" id="strictNote">
+        Strict attivo per Manhattan, Brooklyn e Queens (Harlem/Upper Manhattan sono inclusi in Manhattan).
+      </p>
     </section>
 
     <!-- ====== SAVED ====== -->
@@ -273,7 +273,7 @@
       const bedsMin = document.getElementById('bedsMin').value;
       const zip = (document.getElementById('zip').value || '').trim();
       const noFee = document.getElementById('noFee').checked;
-      const leaseTakeover = document.getElementById('leaseTakeover').checked; // NEW
+      const leaseTakeover = document.getElementById('leaseTakeover').checked;
       return { area, maxRent, bedsMin, zip, noFee, leaseTakeover };
     }
     function updateLabels(){
@@ -283,9 +283,7 @@
       document.getElementById('areaLabel').textContent = areaName;
       document.getElementById('zipAreaLabel').textContent = areaName;
       document.getElementById('strictNote').textContent =
-        area === 'manhattan'
-          ? 'Strict attivo per Manhattan. '
-          : 'Strict è disponibile solo per Manhattan (estenderemo per questa area).';
+        'Strict attivo per Manhattan, Brooklyn e Queens (Harlem/Upper Manhattan sono inclusi in Manhattan).';
     }
 
     // ===== Beds segmented =====
@@ -388,7 +386,7 @@
       let zl = `https://www.zillow.com/${zlArea}/rentals/?price=0-${maxRent}`;
       if (bedsParam) zl += `&beds=${bedsParam}-_`;
       if (zip) zl = `https://www.zillow.com/homes/for_rent/${zip}_rb/?price=0-${maxRent}`;
-      if (takeoverTerms && zip) zl += `&text=${enc(takeoverTerms)}`; // best effort quando c'è un contesto
+      if (takeoverTerms && zip) zl += `&text=${enc(takeoverTerms)}`; // best-effort
 
       // RentHop
       let rh = `https://www.renthop.com/apartments-for-rent/nyc/${rhArea}?max_price=${maxRent}`;
@@ -398,22 +396,23 @@
       if (takeoverTerms) rh += `&q=${enc(takeoverTerms)}`;
 
       // Craigslist
-      let cl = `https://newyork.craigslist.org/search/${clArea}/apa?max_price=${maxRent}`;
-      if (bedsParam) cl += `&min_bedrooms=${bedsParam}`;
-      if (zip) cl += `&query=${enc(zip)}`;
-      if (takeoverTerms) cl += `${zip ? '+' : ''}${takeoverTerms ? `&query=${enc(takeoverTerms)}` : ''}`;
+      // Costruzione con un solo "query=" (evita duplicati)
+      const clParams = new URLSearchParams();
+      clParams.set('max_price', String(maxRent));
+      if (bedsParam) clParams.set('min_bedrooms', String(bedsParam));
+      const clQuery = [zip, takeoverTerms].filter(Boolean).join(' ');
+      if (clQuery) clParams.set('query', clQuery);
+      let cl = `https://newyork.craigslist.org/search/${clArea}/apa?${clParams.toString()}`;
 
-      // Realtor
+      // Realtor (no query testuale via URL, solo filtri base)
       let rl = `https://www.realtor.com/apartments/${rlArea}/price-na-${maxRent}`;
       if (bedsParam) rl += `/beds-${bedsParam}`;
       if (zip) rl = `https://www.realtor.com/apartments/${zip}/price-na-${maxRent}`;
-      // (Realtor non accetta facilmente query testuali da URL → user prompt manuale)
 
-      // HotPads
+      // HotPads (no query testuale via URL)
       let hp = `https://hotpads.com/${hpArea}/apartments-for-rent?price=-${maxRent}`;
       if (bedsParam) hp += `&beds=${bedsParam}`;
       if (zip) hp = `https://hotpads.com/${zip}/apartments-for-rent?price=-${maxRent}`;
-      // (HotPads: query testuale manuale dopo l’apertura)
 
       return [
         { name: 'RentHop',                 url: rh, status: 'validated' },
@@ -472,21 +471,27 @@
       if (bedsMin) params.set('beds', bedsMin);
       if (zip) params.set('zip', zip);
       if (noFee) params.set('nofee', '1');
-      if (leaseTakeover) params.set('lt', '1'); // NEW
+      if (leaseTakeover) params.set('lt', '1');
       history.replaceState({}, '', `${location.pathname}?${params.toString()}`);
     }
 
     // ===== Strict (serverless) =====
+    // ⚠️ Se il tuo dominio Vercel è diverso, cambia qui
     const API_BASE = 'https://rent-finder-manhattan.vercel.app';
+
     async function loadStrict(){
       const { area, maxRent, bedsMin, zip } = readState();
       const box = document.getElementById('strictBox');
-      if (area !== 'manhattan') {
-        box.innerHTML = '<div class="text-sm text-muted">Strict è disponibile solo per Manhattan in questa versione.</div>';
+
+      // Strict supportato per Manhattan, Brooklyn, Queens (Harlem/Upper usano mnh)
+      const allowed = ['manhattan', 'brooklyn', 'queens', 'harlem', 'upper_manhattan'];
+      if (!allowed.includes(area)) {
+        box.innerHTML = '<div class="text-sm text-muted">Strict non disponibile per questa area.</div>';
         return;
       }
 
       const params = new URLSearchParams({ max: String(maxRent) });
+      params.set('area', area);
       if (bedsMin) params.set('beds', String(bedsMin));
       if (zip) params.set('zip', zip);
 
@@ -631,8 +636,7 @@
       if (/\b3\+|\bthree\b|3 camere|3 bedroom/.test(q)) beds = '3';
 
       const nofee = /\bno[\s-]?fee\b|senza\s*fee|no\s*commission/i.test(original);
-
-      let takeover = /\blease\s*(assignment|takeover|break)\b|assume\s*lease|landlord\s*approval/i.test(original);
+      const takeover = /\blease\s*(assignment|takeover|break)\b|assume\s*lease|landlord\s*approval/i.test(original);
 
       let zip = null;
       const zipMatch = q.match(/\b(10\d{3}|1110[1-6]|11[3-4]\d{2}|1169[1-4]|11697|112\d{2})\b/);
@@ -696,7 +700,7 @@
       const beds = u.searchParams.get('beds');
       const zip = u.searchParams.get('zip');
       const nofee = u.searchParams.get('nofee');
-      const lt = u.searchParams.get('lt'); // NEW
+      const lt = u.searchParams.get('lt');
 
       if (area && document.querySelector(`#area option[value="${area}"]`)) document.getElementById('area').value = area;
       if (max) document.getElementById('maxRent').value = max;
